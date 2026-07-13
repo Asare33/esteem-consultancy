@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="none">
+  <defs>
+    <linearGradient id="emc-grad" x1="64" y1="64" x2="448" y2="448" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#0A7A2F"/>
+      <stop stop-color="#4B0082"/>
+    </linearGradient>
+  </defs>
+  <rect x="32" y="32" width="448" height="448" rx="96" fill="url(#emc-grad)"/>
+  <path d="M148 168h216v48H148v-48zm0 88h168v48H148v-48zm0 88h216v48H148v-48z" fill="#fff" fill-opacity="0.18"/>
+  <text x="256" y="292" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif" font-size="148" font-weight="700" fill="#FFFFFF">E</text>
+  <circle cx="392" cy="136" r="28" fill="#FFFFFF" fill-opacity="0.95"/>
+  <path d="M382 136l8 8 16-16" stroke="#0A7A2F" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
