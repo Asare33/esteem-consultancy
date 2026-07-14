@@ -1,149 +1,153 @@
+import { ghanaImage } from "./ghana-images";
+
+function unsplash(id: string, width = 900): string {
+  return `https://images.unsplash.com/${id}?w=${width}&q=80&auto=format&fit=crop`;
+}
+
 export interface FuneralServiceCard {
   id: string;
   title: string;
   description: string;
   icon: string;
+  image: string;
   features: string[];
   highlighted?: boolean;
 }
 
 export const funeralServiceCards: FuneralServiceCard[] = [
   {
-    id: "complete-funeral-coordination",
-    title: "Complete Funeral Coordination",
+    id: "book-of-condolences",
+    title: "Opening of Book of Condolences",
     description:
-      "A dedicated funeral coordinator manages every aspect of the service on your family's behalf—from first call through burial or cremation and reception.",
-    icon: "ClipboardList",
+      "Create a welcoming and respectful environment for family, friends, and well-wishers to pay their respects.",
+    icon: "BookOpen",
+    image: unsplash("photo-1490730141103-6cac27aaab94"),
     features: [
-      "Single point of contact for the family",
-      "Timeline and vendor coordination",
-      "Budget guidance and transparent costing",
-      "24-hour emergency response line",
+      "Elegant condolence table setup",
+      "Floral arrangements",
+      "Guest registration management",
+      "Tribute display arrangements",
+    ],
+  },
+  {
+    id: "night-vigil",
+    title: "Night Vigil Setup",
+    description: "We create serene and comforting spaces for remembrance and reflection.",
+    icon: "Moon",
+    image: unsplash("photo-1519681393784-d120267933ba"),
+    features: [
+      "Canopy and seating arrangements",
+      "Stage and backdrop setup",
+      "Sound system coordination",
+      "Lighting and decorative enhancements",
+    ],
+  },
+  {
+    id: "funeral-church",
+    title: "Funeral Service (Church Setup)",
+    description: "Professional coordination for a seamless church service.",
+    icon: "Building2",
+    image: unsplash("photo-1438232992991-995b7058bbb3"),
+    features: [
+      "Church décor",
+      "Reserved seating arrangements",
+      "Family protocol coordination",
+      "Ushering services",
+      "Service-day management",
+    ],
+  },
+  {
+    id: "outdoor-reception",
+    title: "Outdoor Funeral Reception Setup",
+    description: "Transform outdoor venues into dignified and comfortable gathering spaces.",
+    icon: "Tent",
+    image: ghanaImage("accraBeachTents", 900),
+    features: [
+      "Canopies and tents",
+      "Tables and chairs",
+      "Stage setup",
+      "Floral and themed decorations",
+      "Public address systems",
+    ],
+  },
+  {
+    id: "professional-ushers",
+    title: "Professional Ushers",
+    description: "Our trained ushers provide courteous and professional guest management.",
+    icon: "Users",
+    image: unsplash("photo-1511632765486-a01980e01a18"),
+    features: [
+      "Guest reception",
+      "Seating assistance",
+      "Protocol services",
+      "VIP guest management",
+    ],
+  },
+  {
+    id: "musical-cultural",
+    title: "Musical & Cultural Services",
+    description:
+      "Create a reflective atmosphere with live flute performances and celebrate heritage with traditional drumming ensembles.",
+    icon: "Music",
+    image: ghanaImage("traditionalDance", 900),
+    features: [
+      "Live flute performance",
+      "Traditional drumming",
+      "Soothing reflective atmosphere",
+      "Cultural celebration of heritage",
     ],
     highlighted: true,
   },
   {
-    id: "casket-coffin-supply",
-    title: "Casket & Coffin Supply",
-    description:
-      "We source and deliver quality caskets and coffins in a range of styles and finishes, aligned with family preference, faith tradition, and budget.",
-    icon: "Box",
-    features: [
-      "Local and imported options",
-      "Custom lining and nameplate engraving",
-      "Viewing and selection assistance",
-      "Timely delivery to morgue or residence",
-    ],
-  },
-  {
-    id: "hearse-transport",
-    title: "Hearse & Funeral Transport",
-    description:
-      "Dignified hearse services and coordinated family transport ensure every procession is conducted with respect, punctuality, and proper protocol.",
-    icon: "Car",
-    features: [
-      "Premium hearse fleet",
-      "Family bus and limousine hire",
-      "Route planning and police liaison where required",
-      "Out-of-town and inter-city coverage",
-    ],
-  },
-  {
-    id: "church-memorial-services",
-    title: "Church & Memorial Services",
-    description:
-      "We arrange church bookings, clergy coordination, funeral programmes, hymnals, and audiovisual support for worship services and memorial gatherings.",
-    icon: "Church",
-    features: [
-      "Church and chapel reservations",
-      "Order-of-service design and printing",
-      "Sound system and live streaming setup",
-      "Usher and protocol support",
-    ],
-  },
-  {
-    id: "grave-cemetery-arrangements",
-    title: "Grave & Cemetery Arrangements",
-    description:
-      "From cemetery plot identification to grave digging, lining, and tombstone referrals, we handle ground preparations with care and compliance.",
-    icon: "Landmark",
-    features: [
-      "Cemetery and burial ground liaison",
-      "Grave digging and preparation",
-      "Vault and lining coordination",
-      "Tombstone and monument referrals",
-    ],
-  },
-  {
-    id: "funeral-announcements",
-    title: "Funeral Announcements & Programmes",
-    description:
-      "Professionally designed funeral announcements, posters, and printed programmes distributed through traditional and digital channels.",
+    id: "brochure-printing",
+    title: "Funeral Brochure Design & Printing",
+    description: "Professional memorial publication services for programmes and tributes.",
     icon: "Newspaper",
+    image: unsplash("photo-1544716278-ca5e3f4abd8c"),
     features: [
-      "Radio and television announcement placement",
-      "Social media and WhatsApp graphics",
-      "Printed posters and handbills",
-      "Biography and tribute booklet design",
+      "Funeral brochure design",
+      "Tribute booklets",
+      "Memorial programs",
+      "Posters and banners",
+      "Thank-you cards",
     ],
   },
   {
-    id: "catering-refreshments",
-    title: "Catering & Refreshments",
+    id: "funeral-catering",
+    title: "Funeral Catering Services",
     description:
-      "Thoughtfully planned catering for pre-burial gatherings, post-service receptions, and one-week observances—scaled to your guest list.",
+      "Our catering partners provide quality food and refreshments for guests and family members.",
     icon: "UtensilsCrossed",
+    image: unsplash("photo-1555244162-803834f70033"),
     features: [
-      "Buffet and plated service options",
       "Local and continental menus",
-      "Beverage and water station setup",
-      "Tableware, linens, and service staff",
+      "Beverage service",
+      "VIP catering",
+      "Family catering packages",
     ],
   },
   {
-    id: "floral-wreath-arrangements",
-    title: "Floral & Wreath Arrangements",
-    description:
-      "Fresh floral tributes, wreaths, and sanctuary arrangements prepared to honour the deceased and complement the service setting.",
-    icon: "Flower2",
+    id: "funeral-logistics",
+    title: "Funeral Logistics Management",
+    description: "Comprehensive support for all funeral-related logistics.",
+    icon: "Truck",
+    image: unsplash("photo-1552664730-d307ca884978"),
     features: [
-      "Casket sprays and standing wreaths",
-      "Church altar and podium flowers",
-      "Family tribute bouquets",
-      "Same-day rush orders where possible",
-    ],
-  },
-  {
-    id: "repatriation-assistance",
-    title: "Repatriation Assistance",
-    description:
-      "Comprehensive support for families repatriating loved ones within Ghana or internationally, including documentation and airline coordination.",
-    icon: "Plane",
-    features: [
-      "Embassy and consulate documentation guidance",
-      "Airline and cargo booking support",
-      "Receiving arrangements at destination",
-      "Cross-border logistics management",
-    ],
-  },
-  {
-    id: "memorial-anniversaries",
-    title: "Memorial & Anniversary Services",
-    description:
-      "Planning and coordination for one-week, forty-day, one-year, and subsequent memorial services that bring family and community together.",
-    icon: "CalendarHeart",
-    features: [
-      "Venue and programme planning",
-      "Tribute video and photo montages",
-      "Guest invitations and seating",
-      "Equipment and catering packages",
+      "Vendor coordination",
+      "Equipment rental",
+      "Transportation arrangements",
+      "Security coordination",
+      "Event supervision",
+      "On-site management",
     ],
   },
 ];
 
 export const funeralServiceIntro = {
-  title: "Compassionate Funeral Services",
-  subtitle: "Guiding families with dignity, respect, and unwavering support",
+  title: "Funeral Planning & Management Services",
+  subtitle: "Honouring Lives with Dignity, Excellence and Compassion",
   description:
-    "When you entrust Esteem with a funeral arrangement, you receive more than logistics—you receive a caring partner who understands Ghanaian traditions, Christian rites, and the quiet details that bring comfort during difficult days. Our team is available around the clock to respond when you need us most.",
+    "At Esteem Events Management Consultancy, we understand that saying goodbye to a loved one is one of life's most emotional moments. Our dedicated team provides professional funeral planning, coordination, and logistics services to ensure every farewell is organized with dignity, respect, and excellence.",
+  supportLine:
+    "From the opening of the Book of Condolences to the final funeral rites, we manage every detail so families can focus on celebrating the life and legacy of their loved ones.",
 };

@@ -1,8 +1,19 @@
 import type { Metadata } from "next";
+import Image from "next/image";
 import Link from "next/link";
 import {
-  ClipboardList, Box, Car, Building2, Landmark, Newspaper, UtensilsCrossed, Flower2, Plane, CalendarHeart,
-  Shield, Heart, CheckCircle, type LucideIcon,
+  BookOpen,
+  Moon,
+  Building2,
+  Tent,
+  Users,
+  Music,
+  Newspaper,
+  UtensilsCrossed,
+  Truck,
+  CheckCircle,
+  Heart,
+  type LucideIcon,
 } from "lucide-react";
 import { PageHeader } from "@/components/layout/page-header";
 import { CtaSection } from "@/components/sections/cta-section";
@@ -13,11 +24,20 @@ import { Card, CardContent } from "@/components/ui/card";
 export const metadata: Metadata = {
   title: "Funeral Planning & Management",
   description:
-    "Compassionate, dignified funeral planning and coordination services in Ghana. Honouring lives with excellence and care.",
+    "Compassionate funeral planning and coordination in Ghana—condolence books, vigils, church services, receptions, ushers, catering, and logistics.",
 };
 
 const iconMap: Record<string, LucideIcon> = {
-  ClipboardList, Box, Car, Church: Building2, Landmark, Newspaper, UtensilsCrossed, Flower2, Plane, CalendarHeart, Shield, Heart,
+  BookOpen,
+  Moon,
+  Building2,
+  Tent,
+  Users,
+  Music,
+  Newspaper,
+  UtensilsCrossed,
+  Truck,
+  Heart,
 };
 
 const whyChoose = [
@@ -31,38 +51,51 @@ export default function FuneralPlanningPage() {
   return (
     <>
       <PageHeader
-        eyebrow="Event Management"
-        title="Honouring Lives with Dignity, Excellence & Compassion"
+        eyebrow="Event Management · Funeral Planning"
+        title={funeralServiceIntro.subtitle}
         description={funeralServiceIntro.description}
       />
 
-      <section className="py-20">
+      <section className="py-16">
         <div className="mx-auto max-w-7xl px-4 lg:px-8">
-          <p className="mx-auto max-w-3xl text-center text-gray-muted leading-relaxed">
-            At Esteem Management Consultancy, we understand that saying goodbye to a loved one is one of
-            life&apos;s most emotional moments. Our dedicated team provides compassionate and professional
-            funeral planning, coordination, and logistics services that allow families to focus on
-            celebrating the life of their loved one while we manage every detail with dignity and excellence.
-          </p>
+          <div className="mx-auto max-w-3xl text-center">
+            <p className="text-sm font-semibold uppercase tracking-widest text-green">
+              {funeralServiceIntro.title}
+            </p>
+            <p className="mt-4 text-gray-muted leading-relaxed">{funeralServiceIntro.supportLine}</p>
+          </div>
 
-          <div className="mt-16 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+          <div className="mt-14 grid gap-8 md:grid-cols-2 xl:grid-cols-3">
             {funeralServiceCards.map((card) => {
               const Icon = iconMap[card.icon] ?? Heart;
               return (
                 <Card
                   key={card.id}
-                  className={`border-0 shadow-lg transition hover:shadow-xl ${card.highlighted ? "ring-2 ring-green" : ""}`}
+                  className={`overflow-hidden border-0 shadow-lg transition hover:-translate-y-1 hover:shadow-xl ${
+                    card.highlighted ? "ring-2 ring-green" : ""
+                  }`}
                 >
-                  <CardContent className="p-6">
-                    <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-purple/10 text-purple">
-                      <Icon className="h-6 w-6" />
+                  <div className="relative h-48">
+                    <Image
+                      src={card.image}
+                      alt={card.title}
+                      fill
+                      className="object-cover"
+                      sizes="(max-width: 768px) 100vw, 33vw"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
+                    <div className="absolute bottom-3 left-3 flex h-10 w-10 items-center justify-center rounded-xl bg-white/95 text-purple">
+                      <Icon className="h-5 w-5" />
                     </div>
-                    <h3 className="mt-4 font-display text-lg font-semibold text-gray">{card.title}</h3>
-                    <p className="mt-2 text-sm text-gray-muted">{card.description}</p>
+                  </div>
+                  <CardContent className="p-6">
+                    <h3 className="font-display text-lg font-semibold text-gray">{card.title}</h3>
+                    <p className="mt-2 text-sm text-gray-muted leading-relaxed">{card.description}</p>
                     <ul className="mt-4 space-y-2">
                       {card.features.map((f) => (
                         <li key={f} className="flex items-start gap-2 text-sm text-gray-muted">
-                          <CheckCircle className="mt-0.5 h-4 w-4 shrink-0 text-green" /> {f}
+                          <CheckCircle className="mt-0.5 h-4 w-4 shrink-0 text-green" />
+                          {f}
                         </li>
                       ))}
                     </ul>
@@ -86,15 +119,22 @@ export default function FuneralPlanningPage() {
             ))}
           </div>
           <div className="mt-12 flex flex-wrap justify-center gap-4">
-            <Button asChild size="lg"><Link href="/book-consultation">Request Consultation</Link></Button>
-            <Button asChild variant="outline" size="lg"><Link href="/request-quote">Get a Quote</Link></Button>
+            <Button asChild size="lg">
+              <Link href="/book-consultation">Request Consultation</Link>
+            </Button>
+            <Button asChild variant="outline" size="lg">
+              <Link href="/request-quote">Get a Quote</Link>
+            </Button>
+            <Button asChild variant="outline" size="lg">
+              <Link href="/services/event-management">Back to Event Management</Link>
+            </Button>
           </div>
         </div>
       </section>
 
       <CtaSection
         title="We're Here When You Need Us Most"
-        description="Our 24-hour emergency line ensures support is always available during life's most difficult moments."
+        description="From the Book of Condolences to final rites, our team manages every detail with dignity and care."
       />
     </>
   );

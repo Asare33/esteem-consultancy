@@ -1,7 +1,14 @@
-import type { Metadata } from "next";
+import { PageHeader } from "@/components/layout/page-header";
+import { CtaSection } from "@/components/sections/cta-section";
+import { getServiceBySlug, getAllServiceSlugs, services, type Service } from "@/data/services";
+import { funeralServiceCards } from "@/data/funeral-services";
+import { siteInfo } from "@/data/site";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
 import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import type { Metadata } from "next";
 import {
   CalendarDays,
   Megaphone,
@@ -13,12 +20,6 @@ import {
   Package,
   type LucideIcon,
 } from "lucide-react";
-import { PageHeader } from "@/components/layout/page-header";
-import { CtaSection } from "@/components/sections/cta-section";
-import { getServiceBySlug, getAllServiceSlugs, services, type Service } from "@/data/services";
-import { siteInfo } from "@/data/site";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 
 const iconMap: Record<string, LucideIcon> = {
   CalendarDays,
@@ -124,6 +125,50 @@ function EventManagementPillars({ service }: { service: Service }) {
           <Button asChild variant="outline">
             <Link href="/portfolio">View Our Work</Link>
           </Button>
+        </div>
+      </div>
+
+      <div id="funeral-planning" className="mt-16 scroll-mt-28">
+        <div className="flex flex-wrap items-end justify-between gap-4">
+          <div>
+            <p className="text-sm font-semibold uppercase tracking-widest text-green">
+              Under Event Management
+            </p>
+            <h3 className="mt-2 font-display text-2xl font-bold text-gray md:text-3xl">
+              Funeral Planning &amp; Management Services
+            </h3>
+            <p className="mt-2 max-w-3xl text-gray-muted">
+              Honouring lives with dignity, excellence and compassion—from the Book of Condolences to final rites.
+            </p>
+          </div>
+          <Button asChild>
+            <Link href="/services/funeral-planning">
+              View All Funeral Services <ArrowRight className="ml-1 h-4 w-4" />
+            </Link>
+          </Button>
+        </div>
+        <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          {funeralServiceCards.slice(0, 6).map((card) => (
+            <Link
+              key={card.id}
+              href="/services/funeral-planning"
+              className="group overflow-hidden rounded-2xl bg-white shadow-md transition hover:-translate-y-1 hover:shadow-xl"
+            >
+              <div className="relative h-40">
+                <Image
+                  src={card.image}
+                  alt={card.title}
+                  fill
+                  className="object-cover transition group-hover:scale-105"
+                  sizes="33vw"
+                />
+              </div>
+              <div className="p-5">
+                <h4 className="font-display font-semibold text-gray">{card.title}</h4>
+                <p className="mt-1 line-clamp-2 text-sm text-gray-muted">{card.description}</p>
+              </div>
+            </Link>
+          ))}
         </div>
       </div>
     </>
