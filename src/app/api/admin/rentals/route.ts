@@ -38,7 +38,7 @@ export async function GET(request: NextRequest) {
   }
 
   query += " ORDER BY created_at DESC";
-  const rentals = getDb().prepare(query).all(...params);
+  const rentals = await (await getDb()).prepare(query).all(...params);
   return NextResponse.json({ rentals });
 }
 
@@ -49,9 +49,9 @@ export async function POST(request: NextRequest) {
   try {
     const body = rentalSchema.parse(await request.json());
     const reference = generateReference("RN");
-    const db = getDb();
+    const db = await getDb();
 
-    const result = db
+    const result = await db
       .prepare(
         `INSERT INTO rentals (reference, customer_name, contact, email, item_rented, quantity, date_out, return_date, status, notes)
          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
@@ -69,7 +69,7 @@ export async function POST(request: NextRequest) {
         body.notes ?? null
       );
 
-    logActivity("create", "rental", Number(result.lastInsertRowid), reference);
+    await logActivity("create", "rental", Number(result.lastInsertRowid), reference);
     return NextResponse.json({ ok: true, id: result.lastInsertRowid, reference }, { status: 201 });
   } catch {
     return NextResponse.json({ error: "Invalid rental data" }, { status: 400 });

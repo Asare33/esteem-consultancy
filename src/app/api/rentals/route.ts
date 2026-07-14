@@ -28,7 +28,7 @@ const publicRentalSchema = z.object({
 export async function POST(request: NextRequest) {
   try {
     const body = publicRentalSchema.parse(await request.json());
-    const db = getDb();
+    const db = await getDb();
     const reference = body.reference ?? generateReference("RN");
     const inserted: number[] = [];
 
@@ -43,7 +43,7 @@ export async function POST(request: NextRequest) {
           .filter(Boolean)
           .join(". ");
 
-        const result = db
+        const result = await db
           .prepare(
             `INSERT INTO rentals (reference, customer_name, contact, email, item_rented, quantity, date_out, return_date, status, notes)
              VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'pending', ?)`
@@ -63,7 +63,7 @@ export async function POST(request: NextRequest) {
       }
     } else {
       const itemName = body.item_rented ?? "General rental request";
-      const result = db
+      const result = await db
         .prepare(
           `INSERT INTO rentals (reference, customer_name, contact, email, item_rented, quantity, date_out, return_date, status, notes)
            VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'pending', ?)`
@@ -82,7 +82,7 @@ export async function POST(request: NextRequest) {
       inserted.push(Number(result.lastInsertRowid));
     }
 
-    logActivity("create", "rental", inserted[0], `Website: ${reference}`);
+    await logActivity("create", "rental", inserted[0], `Website: ${reference}`);
     return NextResponse.json({ ok: true, reference, ids: inserted }, { status: 201 });
   } catch {
     return NextResponse.json({ error: "Invalid rental data" }, { status: 400 });

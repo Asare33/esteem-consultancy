@@ -29,8 +29,8 @@ export async function PUT(
 
   try {
     const body = updateSchema.parse(await request.json());
-    const db = getDb();
-    const existing = db.prepare("SELECT * FROM rentals WHERE id = ?").get(rentalId);
+    const db = await getDb();
+    const existing = await db.prepare("SELECT * FROM rentals WHERE id = ?").get(rentalId);
     if (!existing) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
     const fields: string[] = [];
@@ -50,10 +50,10 @@ export async function PUT(
     fields.push("updated_at = datetime('now')");
     values.push(rentalId);
 
-    db.prepare(`UPDATE rentals SET ${fields.join(", ")} WHERE id = ?`).run(...values);
-    logActivity("update", "rental", rentalId, JSON.stringify(body));
+    await db.prepare(`UPDATE rentals SET ${fields.join(", ")} WHERE id = ?`).run(...values);
+    await logActivity("update", "rental", rentalId, JSON.stringify(body));
 
-    const updated = db.prepare("SELECT * FROM rentals WHERE id = ?").get(rentalId);
+    const updated = await db.prepare("SELECT * FROM rentals WHERE id = ?").get(rentalId);
     return NextResponse.json({ ok: true, rental: updated });
   } catch {
     return NextResponse.json({ error: "Invalid data" }, { status: 400 });
@@ -68,8 +68,9 @@ export async function DELETE(
   if (error) return error;
 
   const { id } = await params;
-  getDb().prepare("DELETE FROM rentals WHERE id = ?").run(parseInt(id, 10));
-  logActivity("delete", "rental", parseInt(id, 10));
+  const rentalId = parseInt(id, 10);
+  await (await getDb()).prepare("DELETE FROM rentals WHERE id = ?").run(rentalId);
+  await logActivity("delete", "rental", rentalId);
 
   return NextResponse.json({ ok: true });
 }

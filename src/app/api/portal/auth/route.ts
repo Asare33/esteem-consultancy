@@ -30,24 +30,24 @@ export async function POST(request: NextRequest) {
 
     if (mode === "register") {
       const data = registerSchema.parse(body);
-      const result = registerCustomer(data);
+      const result = await registerCustomer(data);
       if ("error" in result) {
         return NextResponse.json({ error: result.error }, { status: 400 });
       }
       const token = await createCustomerToken(result);
       await setCustomerSessionCookie(token);
-      logActivity("register", "customer", result.id, result.email);
+      await logActivity("register", "customer", result.id, result.email);
       return NextResponse.json({ ok: true, customer: result });
     }
 
     const data = loginSchema.parse(body);
-    const customer = authenticateCustomer(data.email, data.password);
+    const customer = await authenticateCustomer(data.email, data.password);
     if (!customer) {
       return NextResponse.json({ error: "Invalid email or password" }, { status: 401 });
     }
     const token = await createCustomerToken(customer);
     await setCustomerSessionCookie(token);
-    logActivity("login", "customer", customer.id, customer.email);
+    await logActivity("login", "customer", customer.id, customer.email);
     return NextResponse.json({ ok: true, customer });
   } catch {
     return NextResponse.json({ error: "Invalid request" }, { status: 400 });

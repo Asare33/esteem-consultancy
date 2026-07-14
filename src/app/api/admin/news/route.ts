@@ -16,7 +16,7 @@ export async function GET(request: NextRequest) {
   const { error } = await requireAdmin(request);
   if (error) return error;
 
-  const posts = getDb()
+  const posts = await (await getDb())
     .prepare("SELECT * FROM news_posts ORDER BY created_at DESC")
     .all();
 
@@ -29,14 +29,15 @@ export async function POST(request: NextRequest) {
 
   try {
     const body = newsSchema.parse(await request.json());
-    const result = getDb()
+    const db = await getDb();
+    const result = await db
       .prepare(
         "INSERT INTO news_posts (title, content, image, status) VALUES (?, ?, ?, ?)"
       )
       .run(body.title, body.content, body.image ?? null, body.status ?? "draft");
 
-    logActivity("create", "news", Number(result.lastInsertRowid), body.title);
-    const post = getDb().prepare("SELECT * FROM news_posts WHERE id = ?").get(result.lastInsertRowid);
+    await logActivity("create", "news", Number(result.lastInsertRowid), body.title);
+    const post = await db.prepare("SELECT * FROM news_posts WHERE id = ?").get(result.lastInsertRowid);
     return NextResponse.json({ ok: true, post }, { status: 201 });
   } catch {
     return NextResponse.json({ error: "Invalid news data" }, { status: 400 });

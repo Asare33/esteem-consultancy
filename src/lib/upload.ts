@@ -1,16 +1,19 @@
 import path from "path";
 import fs from "fs";
 import { randomUUID } from "crypto";
+import { del, put } from "@vercel/blob";
 
-/** Vercel project FS is read-only; persist uploads in /tmp (ephemeral per instance). */
+/** Local/dev filesystem uploads (not used when Vercel Blob is configured). */
 const UPLOAD_DIR = process.env.VERCEL
   ? path.join("/tmp", "esteem-uploads")
   : path.join(/* turbopackIgnore: true */ process.cwd(), "public", "uploads");
 
 const ALLOWED_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
-const MAX_SIZE = 5 * 1024 * 1024; // 5MB (gallery/news file storage)
-/** Inventory embeds images as data URLs in JSON — keep smaller to fit request limits. */
-const MAX_INVENTORY_SIZE = 1.5 * 1024 * 1024;
+const MAX_SIZE = 5 * 1024 * 1024; // 5MB
+
+export function isBlobConfigured() {
+  return Boolean(process.env.BLOB_READ_WRITE_TOKEN);
+}
 
 export function ensureUploadDir() {
   if (!fs.existsSync(UPLOAD_DIR)) {
@@ -18,47 +21,39 @@ export function ensureUploadDir() {
   }
 }
 
-export function validateImageFile(file: File, options?: { inventory?: boolean }): string | null {
+export function validateImageFile(file: File): string | null {
   if (!ALLOWED_TYPES.has(file.type)) {
     return "Only JPG, PNG, and WebP images are allowed.";
   }
-  const max = options?.inventory ? MAX_INVENTORY_SIZE : MAX_SIZE;
-  if (file.size > max) {
-    return options?.inventory
-      ? "Inventory images must be under 1.5MB. Compress the photo and try again."
-      : "File size must be under 5MB.";
+  if (file.size > MAX_SIZE) {
+    return "File size must be under 5MB.";
   }
   return null;
 }
 
 export async function saveUpload(
   file: File,
-  subfolder?: string,
-  options?: { asDataUrl?: boolean }
+  subfolder?: string
 ): Promise<{ filename: string; path: string }> {
-  const error = validateImageFile(file, {
-    inventory: options?.asDataUrl === true || subfolder === "inventory" || Boolean(process.env.VERCEL),
-  });
+  const error = validateImageFile(file);
   if (error) throw new Error(error);
 
   const ext = file.name.split(".").pop()?.toLowerCase() ?? "jpg";
   const safeExt = ["jpg", "jpeg", "png", "webp"].includes(ext) ? ext : "jpg";
   const filename = `${randomUUID()}.${safeExt}`;
   const buffer = Buffer.from(await file.arrayBuffer());
+  const key = subfolder ? `uploads/${subfolder}/${filename}` : `uploads/${filename}`;
 
-  // Inventory images are stored as data URLs so the public catalogue can show
-  // them from the DB without relying on the Vercel filesystem.
-  const useDataUrl =
-    options?.asDataUrl === true ||
-    subfolder === "inventory" ||
-    Boolean(process.env.VERCEL);
-
-  if (useDataUrl) {
-    const mime = file.type || (safeExt === "png" ? "image/png" : safeExt === "webp" ? "image/webp" : "image/jpeg");
-    const pathData = `data:${mime};base64,${buffer.toString("base64")}`;
-    return { filename, path: pathData };
+  if (isBlobConfigured()) {
+    const blob = await put(key, buffer, {
+      access: "public",
+      contentType: file.type || `image/${safeExt === "jpg" ? "jpeg" : safeExt}`,
+      token: process.env.BLOB_READ_WRITE_TOKEN,
+    });
+    return { filename, path: blob.url };
   }
 
+  // Local/dev: write under public/uploads (or /tmp on Vercel without Blob — ephemeral)
   ensureUploadDir();
   const dir = subfolder ? path.join(UPLOAD_DIR, subfolder) : UPLOAD_DIR;
   if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
@@ -76,7 +71,16 @@ export function resolveUploadPath(publicPath: string): string | null {
   return path.join(UPLOAD_DIR, normalized);
 }
 
-export function deleteUpload(publicPath: string) {
+export async function deleteUpload(publicPath: string) {
+  if (publicPath.startsWith("https://") && isBlobConfigured()) {
+    try {
+      await del(publicPath, { token: process.env.BLOB_READ_WRITE_TOKEN });
+    } catch (error) {
+      console.error("Failed to delete blob:", error);
+    }
+    return;
+  }
+
   if (!publicPath.startsWith("/uploads/") && !publicPath.startsWith("/api/uploads/")) return;
   const fullPath = resolveUploadPath(publicPath);
   if (fullPath && fs.existsSync(fullPath)) fs.unlinkSync(fullPath);

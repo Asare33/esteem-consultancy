@@ -17,7 +17,7 @@ export async function GET(request: NextRequest) {
   const { error, session } = await requireCustomer(request);
   if (error || !session) return error;
 
-  const db = getDb();
+  const db = await getDb();
   const { searchParams } = new URL(request.url);
   const type = searchParams.get("type") ?? "overview";
 
@@ -25,7 +25,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ customer: session });
   }
 
-  const rentals = db
+  const rentals = await db
     .prepare(
       `SELECT id, rental_number, event_name, venue, pickup_date, return_date, status,
               payment_status, grand_total_ghs, amount_paid_ghs, balance_ghs, created_at
@@ -35,7 +35,7 @@ export async function GET(request: NextRequest) {
     )
     .all(session.id, session.email);
 
-  const bookings = db
+  const bookings = await db
     .prepare(
       `SELECT id, reference, event_type, event_date, location, status, created_at
        FROM bookings
@@ -44,7 +44,7 @@ export async function GET(request: NextRequest) {
     )
     .all(session.email);
 
-  const payments = db
+  const payments = await db
     .prepare(
       `SELECT p.id, p.amount_ghs, p.method, p.reference, p.paid_at, o.rental_number
        FROM rental_payments p
@@ -54,7 +54,7 @@ export async function GET(request: NextRequest) {
     )
     .all(session.id, session.email);
 
-  const notifications = db
+  const notifications = await db
     .prepare(
       `SELECT id, title, body, link, is_read, created_at
        FROM notifications

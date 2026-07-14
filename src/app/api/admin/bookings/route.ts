@@ -50,7 +50,7 @@ export async function GET(request: NextRequest) {
 
   query += " ORDER BY created_at DESC LIMIT 300";
 
-  const bookings = getDb().prepare(query).all(...params);
+  const bookings = await (await getDb()).prepare(query).all(...params);
   return NextResponse.json({ bookings });
 }
 
@@ -61,9 +61,9 @@ export async function POST(request: NextRequest) {
   try {
     const body = bookingSchema.parse(await request.json());
     const reference = generateReference("BK");
-    const db = getDb();
+    const db = await getDb();
 
-    const result = db
+    const result = await db
       .prepare(
         `INSERT INTO bookings (reference, name, email, phone, event_type, event_date, location, message, status, source)
          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
@@ -81,7 +81,7 @@ export async function POST(request: NextRequest) {
         body.source ?? "admin"
       );
 
-    logActivity("create", "booking", Number(result.lastInsertRowid), reference);
+    await logActivity("create", "booking", Number(result.lastInsertRowid), reference);
     return NextResponse.json({ ok: true, id: result.lastInsertRowid, reference }, { status: 201 });
   } catch {
     return NextResponse.json({ error: "Invalid booking data" }, { status: 400 });

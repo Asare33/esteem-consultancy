@@ -29,8 +29,8 @@ export async function PUT(
 
   try {
     const body = updateSchema.parse(await request.json());
-    const db = getDb();
-    const existing = db.prepare("SELECT * FROM bookings WHERE id = ?").get(bookingId);
+    const db = await getDb();
+    const existing = await db.prepare("SELECT * FROM bookings WHERE id = ?").get(bookingId);
     if (!existing) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
     const fields: string[] = [];
@@ -50,10 +50,10 @@ export async function PUT(
     fields.push("updated_at = datetime('now')");
     values.push(bookingId);
 
-    db.prepare(`UPDATE bookings SET ${fields.join(", ")} WHERE id = ?`).run(...values);
-    logActivity("update", "booking", bookingId, JSON.stringify(body));
+    await db.prepare(`UPDATE bookings SET ${fields.join(", ")} WHERE id = ?`).run(...values);
+    await logActivity("update", "booking", bookingId, JSON.stringify(body));
 
-    const updated = db.prepare("SELECT * FROM bookings WHERE id = ?").get(bookingId);
+    const updated = await db.prepare("SELECT * FROM bookings WHERE id = ?").get(bookingId);
     return NextResponse.json({ ok: true, booking: updated });
   } catch {
     return NextResponse.json({ error: "Invalid data" }, { status: 400 });
@@ -69,8 +69,8 @@ export async function DELETE(
 
   const { id } = await params;
   const bookingId = parseInt(id, 10);
-  getDb().prepare("DELETE FROM bookings WHERE id = ?").run(bookingId);
-  logActivity("delete", "booking", bookingId);
+  await (await getDb()).prepare("DELETE FROM bookings WHERE id = ?").run(bookingId);
+  await logActivity("delete", "booking", bookingId);
 
   return NextResponse.json({ ok: true });
 }

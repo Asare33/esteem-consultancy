@@ -13,7 +13,7 @@ const loginSchema = z.object({
 export async function POST(request: NextRequest) {
   try {
     const body = loginSchema.parse(await request.json());
-    const admin = authenticateAdmin(body.email, body.password);
+    const admin = await authenticateAdmin(body.email, body.password);
 
     if (!admin) {
       return NextResponse.json({ error: "Invalid email or password" }, { status: 401 });
@@ -23,7 +23,7 @@ export async function POST(request: NextRequest) {
     await setSessionCookie(token);
 
     try {
-      logActivity("login", "admin", admin.id, admin.email);
+      await logActivity("login", "admin", admin.id, admin.email);
     } catch (error) {
       console.error("Failed to log admin login activity:", error);
     }

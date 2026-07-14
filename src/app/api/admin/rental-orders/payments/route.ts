@@ -19,11 +19,11 @@ export async function POST(request: NextRequest) {
 
   try {
     const data = paymentSchema.parse(await request.json());
-    const db = getDb();
+    const db = await getDb();
 
-    const order = db
+    const order = (await db
       .prepare("SELECT * FROM rental_orders WHERE id = ?")
-      .get(data.rentalOrderId) as
+      .get(data.rentalOrderId)) as
       | {
           id: number;
           rental_number: string;
@@ -40,36 +40,41 @@ export async function POST(request: NextRequest) {
     const paymentStatus =
       balance <= 0 ? "paid" : nextPaid > 0 ? "partial" : "unpaid";
 
-    const tx = db.transaction(() => {
-      db.prepare(
-        `INSERT INTO rental_payments (rental_order_id, amount_ghs, method, reference, notes)
+    await db.transaction(async (tx) => {
+      await tx
+        .prepare(
+          `INSERT INTO rental_payments (rental_order_id, amount_ghs, method, reference, notes)
          VALUES (?, ?, ?, ?, ?)`
-      ).run(
-        data.rentalOrderId,
-        data.amountGhs,
-        data.method,
-        data.reference ?? null,
-        data.notes ?? null
-      );
+        )
+        .run(
+          data.rentalOrderId,
+          data.amountGhs,
+          data.method,
+          data.reference ?? null,
+          data.notes ?? null
+        );
 
-      db.prepare(
-        `UPDATE rental_orders
+      await tx
+        .prepare(
+          `UPDATE rental_orders
          SET amount_paid_ghs = ?, balance_ghs = ?, payment_status = ?, updated_at = datetime('now')
          WHERE id = ?`
-      ).run(nextPaid, balance, paymentStatus, data.rentalOrderId);
+        )
+        .run(nextPaid, balance, paymentStatus, data.rentalOrderId);
 
-      db.prepare(
-        `INSERT INTO notifications (audience, title, body, link) VALUES (?, ?, ?, ?)`
-      ).run(
-        order.customer_id ? `customer:${order.customer_id}` : "customer",
-        "Payment received",
-        `Payment of GH₵${data.amountGhs.toLocaleString()} recorded for ${order.rental_number}`,
-        "/portal/payments"
-      );
+      await tx
+        .prepare(
+          `INSERT INTO notifications (audience, title, body, link) VALUES (?, ?, ?, ?)`
+        )
+        .run(
+          order.customer_id ? `customer:${order.customer_id}` : "customer",
+          "Payment received",
+          `Payment of GH₵${data.amountGhs.toLocaleString()} recorded for ${order.rental_number}`,
+          "/portal/payments"
+        );
     });
 
-    tx();
-    logActivity("payment", "rental_order", order.id, `${order.rental_number} +${data.amountGhs}`);
+    await logActivity("payment", "rental_order", order.id, `${order.rental_number} +${data.amountGhs}`);
 
     return NextResponse.json({
       ok: true,

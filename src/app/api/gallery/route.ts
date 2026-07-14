@@ -7,11 +7,11 @@ export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const album = searchParams.get("album");
 
-  const db = getDb();
+  const db = await getDb();
 
   let images;
   if (album) {
-    images = db
+    images = await db
       .prepare(
         `SELECT gi.*, ga.name as album_name, ga.slug as album_slug
          FROM gallery_images gi
@@ -21,7 +21,7 @@ export async function GET(request: NextRequest) {
       )
       .all(album);
   } else {
-    images = db
+    images = await db
       .prepare(
         `SELECT gi.*, ga.name as album_name, ga.slug as album_slug
          FROM gallery_images gi
@@ -31,7 +31,7 @@ export async function GET(request: NextRequest) {
       .all();
   }
 
-  const albums = db.prepare("SELECT * FROM gallery_albums ORDER BY name").all();
+  const albums = await db.prepare("SELECT * FROM gallery_albums ORDER BY name").all();
 
   return NextResponse.json({ albums, images });
 }

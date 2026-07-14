@@ -9,7 +9,7 @@ export async function GET(request: NextRequest) {
   const { error } = await requireAdmin(request, "rentals.manage");
   if (error) return error;
 
-  const db = getDb();
+  const db = await getDb();
   const { searchParams } = new URL(request.url);
   const status = searchParams.get("status");
   const q = searchParams.get("q")?.trim();
@@ -28,7 +28,7 @@ export async function GET(request: NextRequest) {
   }
 
   sql += " ORDER BY created_at DESC LIMIT 200";
-  const orders = db.prepare(sql).all(...params);
+  const orders = await db.prepare(sql).all(...params);
 
   return NextResponse.json({ orders });
 }
@@ -58,84 +58,94 @@ export async function PATCH(request: NextRequest) {
     const id = Number(body.id);
     if (!id) return NextResponse.json({ error: "Missing id" }, { status: 400 });
     const { status } = statusSchema.parse(body);
-    const db = getDb();
+    const db = await getDb();
 
-    const order = db.prepare("SELECT * FROM rental_orders WHERE id = ?").get(id) as
+    const order = (await db.prepare("SELECT * FROM rental_orders WHERE id = ?").get(id)) as
       | { id: number; rental_number: string; status: string }
       | undefined;
     if (!order) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
-    const update = db.transaction(() => {
-      db.prepare(
-        "UPDATE rental_orders SET status = ?, updated_at = datetime('now') WHERE id = ?"
-      ).run(status, id);
+    try {
+      await db.transaction(async (tx) => {
+        await tx
+          .prepare(
+            "UPDATE rental_orders SET status = ?, updated_at = datetime('now') WHERE id = ?"
+          )
+          .run(status, id);
 
-      if (status === "approved" && order.status !== "approved") {
-        const items = db
-          .prepare("SELECT * FROM rental_order_items WHERE rental_order_id = ?")
-          .all(id) as {
-          inventory_item_id: number | null;
-          quantity: number;
-        }[];
+        if (status === "approved" && order.status !== "approved") {
+          const items = (await tx
+            .prepare("SELECT * FROM rental_order_items WHERE rental_order_id = ?")
+            .all(id)) as {
+            inventory_item_id: number | null;
+            quantity: number;
+          }[];
 
-        for (const item of items) {
-          if (!item.inventory_item_id) continue;
-          const inv = db
-            .prepare("SELECT available_stock, reserved_stock FROM inventory_items WHERE id = ?")
-            .get(item.inventory_item_id) as
-            | { available_stock: number; reserved_stock: number }
-            | undefined;
-          if (!inv) continue;
-          if (inv.available_stock < item.quantity) {
-            throw new Error(`Insufficient stock for inventory item ${item.inventory_item_id}`);
-          }
-          db.prepare(
-            `UPDATE inventory_items
+          for (const item of items) {
+            if (!item.inventory_item_id) continue;
+            const inv = (await tx
+              .prepare("SELECT available_stock, reserved_stock FROM inventory_items WHERE id = ?")
+              .get(item.inventory_item_id)) as
+              | { available_stock: number; reserved_stock: number }
+              | undefined;
+            if (!inv) continue;
+            if (inv.available_stock < item.quantity) {
+              throw new Error(`Insufficient stock for inventory item ${item.inventory_item_id}`);
+            }
+            await tx
+              .prepare(
+                `UPDATE inventory_items
              SET available_stock = available_stock - ?,
                  reserved_stock = reserved_stock + ?,
                  updated_at = datetime('now')
              WHERE id = ?`
-          ).run(item.quantity, item.quantity, item.inventory_item_id);
-          db.prepare(
-            `INSERT INTO inventory_transactions (inventory_item_id, rental_order_id, type, quantity, note)
+              )
+              .run(item.quantity, item.quantity, item.inventory_item_id);
+            await tx
+              .prepare(
+                `INSERT INTO inventory_transactions (inventory_item_id, rental_order_id, type, quantity, note)
              VALUES (?, ?, 'reserve', ?, ?)`
-          ).run(item.inventory_item_id, id, item.quantity, `Approved ${order.rental_number}`);
+              )
+              .run(item.inventory_item_id, id, item.quantity, `Approved ${order.rental_number}`);
+          }
         }
-      }
 
-      if ((status === "returned" || status === "completed") && order.status !== "returned") {
-        const items = db
-          .prepare("SELECT * FROM rental_order_items WHERE rental_order_id = ?")
-          .all(id) as {
-          inventory_item_id: number | null;
-          quantity: number;
-          qty_returned: number;
-        }[];
+        if ((status === "returned" || status === "completed") && order.status !== "returned") {
+          const items = (await tx
+            .prepare("SELECT * FROM rental_order_items WHERE rental_order_id = ?")
+            .all(id)) as {
+            inventory_item_id: number | null;
+            quantity: number;
+            qty_returned: number;
+          }[];
 
-        for (const item of items) {
-          if (!item.inventory_item_id) continue;
-          const remaining = item.quantity - (item.qty_returned || 0);
-          if (remaining <= 0) continue;
-          db.prepare(
-            `UPDATE inventory_items
+          for (const item of items) {
+            if (!item.inventory_item_id) continue;
+            const remaining = item.quantity - (item.qty_returned || 0);
+            if (remaining <= 0) continue;
+            await tx
+              .prepare(
+                `UPDATE inventory_items
              SET available_stock = available_stock + ?,
                  reserved_stock = MAX(reserved_stock - ?, 0),
                  updated_at = datetime('now')
              WHERE id = ?`
-          ).run(remaining, remaining, item.inventory_item_id);
-          db.prepare(
-            `UPDATE rental_order_items SET qty_returned = quantity, return_status = 'returned' WHERE rental_order_id = ? AND inventory_item_id = ?`
-          ).run(id, item.inventory_item_id);
-          db.prepare(
-            `INSERT INTO inventory_transactions (inventory_item_id, rental_order_id, type, quantity, note)
+              )
+              .run(remaining, remaining, item.inventory_item_id);
+            await tx
+              .prepare(
+                `UPDATE rental_order_items SET qty_returned = quantity, return_status = 'returned' WHERE rental_order_id = ? AND inventory_item_id = ?`
+              )
+              .run(id, item.inventory_item_id);
+            await tx
+              .prepare(
+                `INSERT INTO inventory_transactions (inventory_item_id, rental_order_id, type, quantity, note)
              VALUES (?, ?, 'return', ?, ?)`
-          ).run(item.inventory_item_id, id, remaining, `Returned ${order.rental_number}`);
+              )
+              .run(item.inventory_item_id, id, remaining, `Returned ${order.rental_number}`);
+          }
         }
-      }
-    });
-
-    try {
-      update();
+      });
     } catch (e) {
       return NextResponse.json(
         { error: e instanceof Error ? e.message : "Stock update failed" },
@@ -143,7 +153,7 @@ export async function PATCH(request: NextRequest) {
       );
     }
 
-    logActivity("update_status", "rental_order", id, `${order.rental_number} -> ${status}`);
+    await logActivity("update_status", "rental_order", id, `${order.rental_number} -> ${status}`);
     return NextResponse.json({ ok: true, status });
   } catch (error) {
     if (error instanceof z.ZodError) {

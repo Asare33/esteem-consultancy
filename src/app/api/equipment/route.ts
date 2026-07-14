@@ -10,7 +10,7 @@ export const runtime = "nodejs";
 
 export async function GET() {
   try {
-    const rows = getDb()
+    const rows = (await (await getDb())
       .prepare(
         `SELECT id, item_code, category, name, description, image,
                 available_stock, rental_price_ghs, maintenance_status
@@ -18,7 +18,7 @@ export async function GET() {
          WHERE active = 1 AND maintenance_status != 'retired'
          ORDER BY name ASC`
       )
-      .all() as InventoryCatalogueRow[];
+      .all()) as InventoryCatalogueRow[];
 
     if (rows.length === 0) {
       return NextResponse.json({ items: equipmentItems, source: "static" });

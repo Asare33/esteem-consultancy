@@ -14,16 +14,16 @@ export async function DELETE(
 
   const { id } = await params;
   const imageId = parseInt(id, 10);
-  const db = getDb();
-  const image = db.prepare("SELECT * FROM gallery_images WHERE id = ?").get(imageId) as
+  const db = await getDb();
+  const image = (await db.prepare("SELECT * FROM gallery_images WHERE id = ?").get(imageId)) as
     | { path: string }
     | undefined;
 
   if (!image) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
-  deleteUpload(image.path);
-  db.prepare("DELETE FROM gallery_images WHERE id = ?").run(imageId);
-  logActivity("delete", "gallery", imageId);
+  await deleteUpload(image.path);
+  await db.prepare("DELETE FROM gallery_images WHERE id = ?").run(imageId);
+  await logActivity("delete", "gallery", imageId);
 
   return NextResponse.json({ ok: true });
 }

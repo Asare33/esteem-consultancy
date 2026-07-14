@@ -3,11 +3,11 @@
  * Additive migrations on top of the existing esteem.db tables.
  * Keeps prior bookings/rentals/news/gallery intact.
  */
-import type Database from "better-sqlite3";
 import { equipmentItems } from "@/data/equipment";
+import type { AppDb } from "@/lib/sql-db";
 
-export function applyEnterpriseSchema(database: Database.Database) {
-  database.exec(`
+export async function applyEnterpriseSchema(database: AppDb) {
+  await database.exec(`
     CREATE TABLE IF NOT EXISTS roles (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       key TEXT UNIQUE NOT NULL,
@@ -147,13 +147,13 @@ export function applyEnterpriseSchema(database: Database.Database) {
     );
   `);
 
-  seedRoles(database);
-  seedInventory(database);
+  await seedRoles(database);
+  await seedInventory(database);
 }
 
-function seedRoles(database: Database.Database) {
-  const count = database.prepare("SELECT COUNT(*) as c FROM roles").get() as { c: number };
-  if (count.c > 0) return;
+async function seedRoles(database: AppDb) {
+  const count = await database.prepare("SELECT COUNT(*) as c FROM roles").get<{ c: number }>();
+  if ((count?.c ?? 0) > 0) return;
 
   const roles = [
     ["super_admin", "Super Admin", "Full system access"],
@@ -166,10 +166,12 @@ function seedRoles(database: Database.Database) {
   ] as const;
 
   const insert = database.prepare("INSERT INTO roles (key, name, description) VALUES (?, ?, ?)");
-  for (const [key, name, description] of roles) insert.run(key, name, description);
+  for (const [key, name, description] of roles) {
+    await insert.run(key, name, description);
+  }
 }
 
-function seedInventory(database: Database.Database) {
+async function seedInventory(database: AppDb) {
   const find = database.prepare(
     `SELECT id FROM inventory_items WHERE item_code = ? OR lower(name) = lower(?) LIMIT 1`
   );
@@ -180,14 +182,13 @@ function seedInventory(database: Database.Database) {
     ) VALUES (?, ?, ?, ?, ?, ?, 0, ?, ?, 1)
   `);
 
-  // Only insert missing catalogue items — never overwrite admin edits (esp. images).
   for (const item of equipmentItems) {
     const code = `INV-${item.id.toUpperCase().replace(/[^A-Z0-9]+/g, "-").slice(0, 28)}`;
-    const existing = find.get(code, item.name) as { id: number } | undefined;
+    const existing = await find.get<{ id: number }>(code, item.name);
     if (existing) continue;
 
     const total = item.availability === "reserved" ? 0 : item.availability === "limited" ? 25 : 100;
-    insert.run(
+    await insert.run(
       code,
       item.category,
       item.name,
@@ -200,14 +201,14 @@ function seedInventory(database: Database.Database) {
   }
 }
 
-export function generateRentalNumber(database: Database.Database): string {
+export async function generateRentalNumber(database: AppDb): Promise<string> {
   const today = new Date();
   const y = today.getFullYear();
   const m = String(today.getMonth() + 1).padStart(2, "0");
   const d = String(today.getDate()).padStart(2, "0");
   const prefix = `RENT-${y}${m}${d}`;
-  const row = database
+  const row = await database
     .prepare("SELECT COUNT(*) as c FROM rental_orders WHERE rental_number LIKE ?")
-    .get(`${prefix}-%`) as { c: number };
-  return `${prefix}-${String(row.c + 1).padStart(4, "0")}`;
+    .get<{ c: number }>(`${prefix}-%`);
+  return `${prefix}-${String((row?.c ?? 0) + 1).padStart(4, "0")}`;
 }

@@ -61,10 +61,10 @@ export async function clearSessionCookie() {
   cookieStore.delete(ADMIN_COOKIE);
 }
 
-export function authenticateAdmin(email: string, password: string): AdminSession | null {
+export async function authenticateAdmin(email: string, password: string): Promise<AdminSession | null> {
   const normalized = email.toLowerCase().trim();
 
-  // Env-based bypass for production hosts where SQLite may be unavailable
+  // Env-based bypass so login still works if DB is temporarily unavailable
   const envEmail = (process.env.ADMIN_EMAIL ?? "admin@esteemconsultancygh.com").toLowerCase().trim();
   const envPassword = process.env.ADMIN_PASSWORD ?? "esteem2026";
   if (normalized === envEmail && password === envPassword) {
@@ -77,14 +77,14 @@ export function authenticateAdmin(email: string, password: string): AdminSession
   }
 
   try {
-    const db = getDb();
+    const db = await getDb();
 
-    const staff = db
+    const staff = (await db
       .prepare(
         `SELECT id, email, name, password_hash, role_key
          FROM staff_users WHERE lower(email) = ? AND active = 1`
       )
-      .get(normalized) as
+      .get(normalized)) as
       | { id: number; email: string; name: string; password_hash: string; role_key: string }
       | undefined;
 
@@ -97,9 +97,9 @@ export function authenticateAdmin(email: string, password: string): AdminSession
       };
     }
 
-    const row = db
+    const row = (await db
       .prepare("SELECT id, email, name, password_hash FROM admins WHERE email = ?")
-      .get(normalized) as
+      .get(normalized)) as
       | { id: number; email: string; name: string; password_hash: string }
       | undefined;
 

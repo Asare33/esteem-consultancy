@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { requireAdmin } from "@/lib/admin-guard";
 import { getDb, logActivity } from "@/lib/db";
+import type { AppDb } from "@/lib/sql-db";
 
 export const runtime = "nodejs";
 
@@ -17,14 +18,14 @@ const itemSchema = z.object({
   maintenanceStatus: z.enum(["ok", "maintenance", "retired"]).default("ok"),
 });
 
-function nextItemCode(db: ReturnType<typeof getDb>): string {
-  const row = db
+async function nextItemCode(db: AppDb): Promise<string> {
+  const row = (await db
     .prepare(
       `SELECT item_code FROM inventory_items
        WHERE item_code LIKE 'INV-%'
        ORDER BY id DESC LIMIT 1`
     )
-    .get() as { item_code: string } | undefined;
+    .get()) as { item_code: string } | undefined;
 
   if (!row?.item_code) return "INV-0001";
   const num = parseInt(row.item_code.replace(/\D/g, ""), 10);
@@ -56,7 +57,7 @@ export async function GET(request: NextRequest) {
   }
 
   sql += " ORDER BY name ASC";
-  const items = getDb().prepare(sql).all(...params);
+  const items = await (await getDb()).prepare(sql).all(...params);
   return NextResponse.json({ items });
 }
 
@@ -66,16 +67,16 @@ export async function POST(request: NextRequest) {
 
   try {
     const data = itemSchema.parse(await request.json());
-    const db = getDb();
-    const itemCode = (data.itemCode?.toUpperCase() || nextItemCode(db)).trim();
+    const db = await getDb();
+    const itemCode = (data.itemCode?.toUpperCase() || (await nextItemCode(db))).trim();
 
-    const exists = db.prepare("SELECT id FROM inventory_items WHERE item_code = ?").get(itemCode);
+    const exists = await db.prepare("SELECT id FROM inventory_items WHERE item_code = ?").get(itemCode);
     if (exists) {
       return NextResponse.json({ error: "Item code already exists" }, { status: 400 });
     }
 
     const available = data.totalStock;
-    const result = db
+    const result = await db
       .prepare(
         `INSERT INTO inventory_items (
            item_code, category, name, description, image, total_stock, reserved_stock,
@@ -95,12 +96,14 @@ export async function POST(request: NextRequest) {
       );
 
     const id = Number(result.lastInsertRowid);
-    logActivity("create", "inventory_item", id, `${itemCode} ${data.name}`);
+    await logActivity("create", "inventory_item", id, `${itemCode} ${data.name}`);
 
-    db.prepare(
-      `INSERT INTO inventory_transactions (inventory_item_id, rental_order_id, type, quantity, note)
+    await db
+      .prepare(
+        `INSERT INTO inventory_transactions (inventory_item_id, rental_order_id, type, quantity, note)
        VALUES (?, NULL, 'receive', ?, ?)`
-    ).run(id, data.totalStock, "Initial stock on create");
+      )
+      .run(id, data.totalStock, "Initial stock on create");
 
     return NextResponse.json({ ok: true, id, itemCode }, { status: 201 });
   } catch (err) {

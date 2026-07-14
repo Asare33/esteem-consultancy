@@ -31,9 +31,9 @@ export async function PUT(request: NextRequest, { params }: Props) {
     if (!id) return NextResponse.json({ error: "Invalid id" }, { status: 400 });
 
     const data = updateSchema.parse(await request.json());
-    const db = getDb();
+    const db = await getDb();
 
-    const existing = db.prepare("SELECT * FROM inventory_items WHERE id = ?").get(id) as
+    const existing = (await db.prepare("SELECT * FROM inventory_items WHERE id = ?").get(id)) as
       | {
           id: number;
           item_code: string;
@@ -54,7 +54,7 @@ export async function PUT(request: NextRequest, { params }: Props) {
 
     const nextCode = data.itemCode?.toUpperCase().trim() ?? existing.item_code;
     if (nextCode !== existing.item_code) {
-      const clash = db
+      const clash = await db
         .prepare("SELECT id FROM inventory_items WHERE item_code = ? AND id != ?")
         .get(nextCode, id);
       if (clash) {
@@ -75,8 +75,9 @@ export async function PUT(request: NextRequest, { params }: Props) {
     const nextAvailable = nextTotal - existing.reserved_stock;
     const stockDelta = nextTotal - existing.total_stock;
 
-    db.prepare(
-      `UPDATE inventory_items
+    await db
+      .prepare(
+        `UPDATE inventory_items
        SET item_code = ?,
            name = ?,
            category = ?,
@@ -89,33 +90,36 @@ export async function PUT(request: NextRequest, { params }: Props) {
            active = ?,
            updated_at = datetime('now')
        WHERE id = ?`
-    ).run(
-      nextCode,
-      data.name ?? existing.name,
-      data.category ?? existing.category,
-      data.description === undefined ? existing.description : data.description,
-      data.image === undefined ? existing.image : data.image,
-      nextTotal,
-      nextAvailable,
-      data.rentalPriceGhs ?? existing.rental_price_ghs,
-      data.maintenanceStatus ?? existing.maintenance_status,
-      data.active ?? existing.active,
-      id
-    );
+      )
+      .run(
+        nextCode,
+        data.name ?? existing.name,
+        data.category ?? existing.category,
+        data.description === undefined ? existing.description : data.description,
+        data.image === undefined ? existing.image : data.image,
+        nextTotal,
+        nextAvailable,
+        data.rentalPriceGhs ?? existing.rental_price_ghs,
+        data.maintenanceStatus ?? existing.maintenance_status,
+        data.active ?? existing.active,
+        id
+      );
 
     if (stockDelta !== 0) {
-      db.prepare(
-        `INSERT INTO inventory_transactions (inventory_item_id, rental_order_id, type, quantity, note)
+      await db
+        .prepare(
+          `INSERT INTO inventory_transactions (inventory_item_id, rental_order_id, type, quantity, note)
          VALUES (?, NULL, ?, ?, ?)`
-      ).run(
-        id,
-        stockDelta > 0 ? "adjust_in" : "adjust_out",
-        Math.abs(stockDelta),
-        "Stock adjustment from inventory edit"
-      );
+        )
+        .run(
+          id,
+          stockDelta > 0 ? "adjust_in" : "adjust_out",
+          Math.abs(stockDelta),
+          "Stock adjustment from inventory edit"
+        );
     }
 
-    logActivity("update", "inventory_item", id, nextCode);
+    await logActivity("update", "inventory_item", id, nextCode);
     return NextResponse.json({ ok: true });
   } catch (err) {
     if (err instanceof z.ZodError) {
@@ -134,8 +138,10 @@ export async function DELETE(request: NextRequest, { params }: Props) {
   const id = Number(idParam);
   if (!id) return NextResponse.json({ error: "Invalid id" }, { status: 400 });
 
-  const db = getDb();
-  const existing = db.prepare("SELECT id, item_code, reserved_stock FROM inventory_items WHERE id = ?").get(id) as
+  const db = await getDb();
+  const existing = (await db
+    .prepare("SELECT id, item_code, reserved_stock FROM inventory_items WHERE id = ?")
+    .get(id)) as
     | { id: number; item_code: string; reserved_stock: number }
     | undefined;
 
@@ -149,12 +155,14 @@ export async function DELETE(request: NextRequest, { params }: Props) {
   }
 
   // Soft delete so historical rental lines keep referential integrity
-  db.prepare(
-    `UPDATE inventory_items
+  await db
+    .prepare(
+      `UPDATE inventory_items
      SET active = 0, available_stock = 0, updated_at = datetime('now')
      WHERE id = ?`
-  ).run(id);
+    )
+    .run(id);
 
-  logActivity("delete", "inventory_item", id, existing.item_code);
+  await logActivity("delete", "inventory_item", id, existing.item_code);
   return NextResponse.json({ ok: true });
 }

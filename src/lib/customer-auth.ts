@@ -63,20 +63,20 @@ export async function clearCustomerSessionCookie() {
   cookieStore.delete(CUSTOMER_COOKIE);
 }
 
-export function registerCustomer(input: {
+export async function registerCustomer(input: {
   fullName: string;
   email: string;
   phone?: string;
   password: string;
   company?: string;
-}): CustomerSession | { error: string } {
-  const db = getDb();
+}): Promise<CustomerSession | { error: string }> {
+  const db = await getDb();
   const email = input.email.toLowerCase().trim();
-  const existing = db.prepare("SELECT id FROM customers WHERE email = ?").get(email);
+  const existing = await db.prepare("SELECT id FROM customers WHERE email = ?").get(email);
   if (existing) return { error: "An account with this email already exists" };
 
   const hash = bcrypt.hashSync(input.password, 12);
-  const result = db
+  const result = await db
     .prepare(
       `INSERT INTO customers (email, phone, password_hash, full_name, company)
        VALUES (?, ?, ?, ?, ?)`
@@ -91,12 +91,15 @@ export function registerCustomer(input: {
   };
 }
 
-export function authenticateCustomer(email: string, password: string): CustomerSession | null {
-  const row = getDb()
+export async function authenticateCustomer(
+  email: string,
+  password: string
+): Promise<CustomerSession | null> {
+  const row = (await (await getDb())
     .prepare(
       "SELECT id, email, full_name, phone, password_hash FROM customers WHERE email = ? AND status = 'active'"
     )
-    .get(email.toLowerCase().trim()) as
+    .get(email.toLowerCase().trim())) as
     | {
         id: number;
         email: string;
@@ -111,27 +114,27 @@ export function authenticateCustomer(email: string, password: string): CustomerS
   return { id: row.id, email: row.email, name: row.full_name, phone: row.phone };
 }
 
-export function findOrCreateCustomerByContact(input: {
+export async function findOrCreateCustomerByContact(input: {
   fullName: string;
   email?: string | null;
   phone: string;
-}): number | null {
-  const db = getDb();
+}): Promise<number | null> {
+  const db = await getDb();
   if (input.email) {
-    const byEmail = db
+    const byEmail = (await db
       .prepare("SELECT id FROM customers WHERE email = ?")
-      .get(input.email.toLowerCase().trim()) as { id: number } | undefined;
+      .get(input.email.toLowerCase().trim())) as { id: number } | undefined;
     if (byEmail) return byEmail.id;
   }
 
-  const byPhone = db
+  const byPhone = (await db
     .prepare("SELECT id FROM customers WHERE phone = ?")
-    .get(input.phone.trim()) as { id: number } | undefined;
+    .get(input.phone.trim())) as { id: number } | undefined;
   if (byPhone) return byPhone.id;
 
   if (!input.email) return null;
 
-  const result = db
+  const result = await db
     .prepare(
       `INSERT INTO customers (email, phone, full_name, password_hash)
        VALUES (?, ?, ?, NULL)`

@@ -32,7 +32,7 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
     const data = createSchema.parse(body);
-    const db = getDb();
+    const db = await getDb();
 
     const subtotal = data.items.reduce(
       (sum, item) => sum + item.unitPriceGhs * item.quantity * item.days,
@@ -43,15 +43,15 @@ export async function POST(request: NextRequest) {
     const vat = 0;
     const grandTotal = Math.max(0, subtotal + transport + vat - discount);
 
-    const rentalNumber = generateRentalNumber(db);
-    const customerId = findOrCreateCustomerByContact({
+    const rentalNumber = await generateRentalNumber(db);
+    const customerId = await findOrCreateCustomerByContact({
       fullName: data.customerName,
       email: data.customerEmail || null,
       phone: data.customerPhone,
     });
 
-    const create = db.transaction(() => {
-      const result = db
+    const orderId = await db.transaction(async (tx) => {
+      const result = await tx
         .prepare(
           `INSERT INTO rental_orders (
             rental_number, customer_id, customer_name, customer_phone, customer_email,
@@ -81,7 +81,7 @@ export async function POST(request: NextRequest) {
         );
 
       const orderId = Number(result.lastInsertRowid);
-      const insertItem = db.prepare(
+      const insertItem = tx.prepare(
         `INSERT INTO rental_order_items (
           rental_order_id, inventory_item_id, item_name, quantity,
           unit_price_ghs, days, line_total_ghs, qty_out
@@ -90,7 +90,7 @@ export async function POST(request: NextRequest) {
 
       for (const item of data.items) {
         const lineTotal = item.unitPriceGhs * item.quantity * item.days;
-        insertItem.run(
+        await insertItem.run(
           orderId,
           item.inventoryItemId ?? null,
           item.itemName,
@@ -102,19 +102,20 @@ export async function POST(request: NextRequest) {
         );
       }
 
-      db.prepare(
-        `INSERT INTO notifications (audience, title, body, link) VALUES ('admin', ?, ?, ?)`
-      ).run(
-        "New rental request",
-        `${data.customerName} submitted ${rentalNumber}`,
-        "/admin/rentals"
-      );
+      await tx
+        .prepare(
+          `INSERT INTO notifications (audience, title, body, link) VALUES ('admin', ?, ?, ?)`
+        )
+        .run(
+          "New rental request",
+          `${data.customerName} submitted ${rentalNumber}`,
+          "/admin/rentals"
+        );
 
       return orderId;
     });
 
-    const orderId = create();
-    logActivity("create", "rental_order", orderId, rentalNumber);
+    await logActivity("create", "rental_order", orderId, rentalNumber);
 
     return NextResponse.json({
       ok: true,
