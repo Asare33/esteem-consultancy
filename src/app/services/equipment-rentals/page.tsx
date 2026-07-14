@@ -35,7 +35,6 @@ function EquipmentCatalog() {
   const [loading, setLoading] = useState(true);
   const {
     items,
-    addItem,
     removeItem,
     updateQuantity,
     updateDuration,
@@ -130,7 +129,7 @@ function EquipmentCatalog() {
               ) : (
                 <div className="grid gap-6 sm:grid-cols-2">
                   {filtered.map((item) => (
-                    <EquipmentCard key={item.id} item={item} onAdd={() => addItem(item)} />
+                    <EquipmentCard key={item.id} item={item} />
                   ))}
                 </div>
               )}
@@ -242,8 +241,27 @@ function EquipmentCatalog() {
   );
 }
 
-function EquipmentCard({ item, onAdd }: { item: EquipmentItem; onAdd: () => void }) {
+function EquipmentCard({ item }: { item: EquipmentItem }) {
+  const { items, addItem, updateQuantity, removeItem } = useRentalCart();
+  const cartItem = items.find((c) => c.item.id === item.id);
+  const quantity = cartItem?.quantity ?? 0;
   const local = isLocalImageSrc(item.image);
+
+  const decrease = () => {
+    if (quantity <= 1) {
+      removeItem(item.id);
+      return;
+    }
+    updateQuantity(item.id, quantity - 1);
+  };
+
+  const increase = () => {
+    if (quantity === 0) {
+      addItem(item, 1);
+      return;
+    }
+    updateQuantity(item.id, quantity + 1);
+  };
 
   return (
     <Card className="group overflow-hidden border-0 shadow-lg transition hover:shadow-xl">
@@ -274,11 +292,37 @@ function EquipmentCard({ item, onAdd }: { item: EquipmentItem; onAdd: () => void
         <h3 className="font-semibold text-gray">{item.name}</h3>
         <p className="mt-1 text-sm text-gray-muted line-clamp-2">{item.description}</p>
         {item.capacity && <p className="mt-2 text-xs text-green">Capacity: {item.capacity}</p>}
-        <div className="mt-3 flex items-center justify-between">
+        <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
           <span className="text-sm font-semibold text-purple">GHS {item.dailyRateGhs}/day</span>
-          <Button size="sm" onClick={onAdd}>
-            Add to Cart
-          </Button>
+          <div className="flex items-center gap-1.5">
+            <button
+              type="button"
+              onClick={decrease}
+              disabled={quantity === 0}
+              aria-label={`Decrease ${item.name} quantity`}
+              className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-border bg-white text-gray transition hover:bg-muted disabled:cursor-not-allowed disabled:opacity-40"
+            >
+              <Minus className="h-3.5 w-3.5" />
+            </button>
+            <span
+              className="min-w-7 text-center text-sm font-semibold tabular-nums text-gray"
+              aria-live="polite"
+              aria-label={`${item.name} quantity`}
+            >
+              {quantity}
+            </span>
+            <button
+              type="button"
+              onClick={increase}
+              aria-label={`Increase ${item.name} quantity`}
+              className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-border bg-white text-gray transition hover:bg-muted"
+            >
+              <Plus className="h-3.5 w-3.5" />
+            </button>
+            <Button size="sm" className="ml-0.5" onClick={() => addItem(item, 1)}>
+              Add to Cart
+            </Button>
+          </div>
         </div>
       </CardContent>
     </Card>
