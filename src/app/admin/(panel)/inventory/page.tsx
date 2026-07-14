@@ -1,13 +1,19 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import Image from "next/image";
 import { Pencil, Plus, Search, Trash2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { equipmentCategories } from "@/data/equipment";
+
+function InventoryThumb({ src, alt, className }: { src: string; alt: string; className?: string }) {
+  return (
+    // eslint-disable-next-line @next/next/no-img-element
+    <img src={src} alt={alt} className={className ?? "h-full w-full object-cover"} />
+  );
+}
 
 interface InventoryItem {
   id: number;
@@ -261,7 +267,7 @@ export default function AdminInventoryPage() {
                 {uploading && <span className="text-sm text-slate-500">Uploading...</span>}
                 {form.image && (
                   <div className="relative h-14 w-20 overflow-hidden rounded-md border border-slate-200">
-                    <Image src={form.image} alt="Inventory preview" fill className="object-cover" sizes="80px" />
+                    <InventoryThumb src={form.image} alt="Inventory preview" />
                   </div>
                 )}
               </div>
@@ -333,7 +339,7 @@ export default function AdminInventoryPage() {
                   <td className="p-4">
                     {item.image ? (
                       <div className="relative h-10 w-14 overflow-hidden rounded-md border border-slate-200">
-                        <Image src={item.image} alt={item.name} fill className="object-cover" sizes="56px" />
+                        <InventoryThumb src={item.image} alt={item.name} />
                       </div>
                     ) : (
                       <span className="text-xs text-slate-400">No image</span>

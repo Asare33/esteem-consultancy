@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { Search, ShoppingCart, Minus, Plus, Trash2 } from "lucide-react";
@@ -12,6 +12,7 @@ import {
   type EquipmentCategory,
   type EquipmentItem,
 } from "@/data/equipment";
+import { setLiveCatalogue } from "@/lib/equipment-catalogue";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -23,9 +24,15 @@ const availabilityColors = {
   reserved: "bg-red-100 text-red-700",
 } as const;
 
+function isLocalImageSrc(src: string) {
+  return src.startsWith("data:") || src.startsWith("/api/") || src.startsWith("/uploads/");
+}
+
 function EquipmentCatalog() {
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState<EquipmentCategory | "all">("all");
+  const [catalogue, setCatalogue] = useState<EquipmentItem[]>(equipmentItems);
+  const [loading, setLoading] = useState(true);
   const {
     items,
     addItem,
@@ -38,11 +45,35 @@ function EquipmentCatalog() {
     deliveryEstimate,
     deliveryBandLabel,
     totalEstimate,
-    deliveryLocation, pickup, setDeliveryLocation, setPickup,
+    deliveryLocation,
+    pickup,
+    setDeliveryLocation,
+    setPickup,
   } = useRentalCart();
 
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch("/api/equipment", { cache: "no-store" });
+        const data = await res.json();
+        if (!cancelled && Array.isArray(data.items) && data.items.length > 0) {
+          setCatalogue(data.items);
+          setLiveCatalogue(data.items);
+        }
+      } catch {
+        // Keep static fallback
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   const filtered = useMemo(() => {
-    return equipmentItems.filter((item) => {
+    return catalogue.filter((item) => {
       const matchCat = category === "all" || item.category === category;
       const matchSearch =
         !search ||
@@ -50,7 +81,7 @@ function EquipmentCatalog() {
         item.description.toLowerCase().includes(search.toLowerCase());
       return matchCat && matchSearch;
     });
-  }, [search, category]);
+  }, [search, category, catalogue]);
 
   return (
     <>
@@ -94,12 +125,16 @@ function EquipmentCatalog() {
 
           <div className="mt-10 grid gap-8 lg:grid-cols-3">
             <div className="lg:col-span-2">
-              <div className="grid gap-6 sm:grid-cols-2">
-                {filtered.map((item) => (
-                  <EquipmentCard key={item.id} item={item} onAdd={() => addItem(item)} />
-                ))}
-              </div>
-              {filtered.length === 0 && (
+              {loading ? (
+                <p className="py-12 text-center text-gray-muted">Loading equipment...</p>
+              ) : (
+                <div className="grid gap-6 sm:grid-cols-2">
+                  {filtered.map((item) => (
+                    <EquipmentCard key={item.id} item={item} onAdd={() => addItem(item)} />
+                  ))}
+                </div>
+              )}
+              {!loading && filtered.length === 0 && (
                 <p className="py-12 text-center text-gray-muted">No equipment matches your search.</p>
               )}
             </div>
@@ -208,10 +243,29 @@ function EquipmentCatalog() {
 }
 
 function EquipmentCard({ item, onAdd }: { item: EquipmentItem; onAdd: () => void }) {
+  const local = isLocalImageSrc(item.image);
+
   return (
     <Card className="group overflow-hidden border-0 shadow-lg transition hover:shadow-xl">
-      <div className="relative h-44">
-        <Image src={item.image} alt={item.name} fill className="object-cover transition group-hover:scale-105" sizes="300px" />
+      <div className="relative h-44 bg-muted">
+        {item.image ? (
+          local ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={item.image}
+              alt={item.name}
+              className="h-full w-full object-cover transition group-hover:scale-105"
+            />
+          ) : (
+            <Image
+              src={item.image}
+              alt={item.name}
+              fill
+              className="object-cover transition group-hover:scale-105"
+              sizes="300px"
+            />
+          )
+        ) : null}
         <Badge className={`absolute right-3 top-3 ${availabilityColors[item.availability]}`}>
           {item.availability}
         </Badge>
@@ -222,7 +276,9 @@ function EquipmentCard({ item, onAdd }: { item: EquipmentItem; onAdd: () => void
         {item.capacity && <p className="mt-2 text-xs text-green">Capacity: {item.capacity}</p>}
         <div className="mt-3 flex items-center justify-between">
           <span className="text-sm font-semibold text-purple">GHS {item.dailyRateGhs}/day</span>
-          <Button size="sm" onClick={onAdd}>Add to Cart</Button>
+          <Button size="sm" onClick={onAdd}>
+            Add to Cart
+          </Button>
         </div>
       </CardContent>
     </Card>

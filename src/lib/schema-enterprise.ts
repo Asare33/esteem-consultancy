@@ -179,31 +179,14 @@ function seedInventory(database: Database.Database) {
       total_stock, reserved_stock, available_stock, rental_price_ghs, active
     ) VALUES (?, ?, ?, ?, ?, ?, 0, ?, ?, 1)
   `);
-  const update = database.prepare(`
-    UPDATE inventory_items
-    SET item_code = ?, category = ?, name = ?, description = ?, image = ?,
-        rental_price_ghs = ?, active = 1, updated_at = datetime('now')
-    WHERE id = ?
-  `);
 
+  // Only insert missing catalogue items — never overwrite admin edits (esp. images).
   for (const item of equipmentItems) {
     const code = `INV-${item.id.toUpperCase().replace(/[^A-Z0-9]+/g, "-").slice(0, 28)}`;
     const existing = find.get(code, item.name) as { id: number } | undefined;
+    if (existing) continue;
+
     const total = item.availability === "reserved" ? 0 : item.availability === "limited" ? 25 : 100;
-
-    if (existing) {
-      update.run(
-        code,
-        item.category,
-        item.name,
-        item.description,
-        item.image,
-        item.dailyRateGhs,
-        existing.id
-      );
-      continue;
-    }
-
     insert.run(
       code,
       item.category,

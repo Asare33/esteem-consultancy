@@ -1,7 +1,8 @@
 "use client";
 
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
-import { equipmentItems, type EquipmentItem } from "@/data/equipment";
+import { type EquipmentItem } from "@/data/equipment";
+import { getCatalogue } from "@/lib/equipment-catalogue";
 
 export interface CartItem {
   item: EquipmentItem;
@@ -70,7 +71,7 @@ function loadCart(): CartItem[] {
     const stored = JSON.parse(raw) as StoredCartItem[];
     return stored
       .map((entry) => {
-        const item = equipmentItems.find((e) => e.id === entry.itemId);
+        const item = getCatalogue().find((e) => e.id === entry.itemId);
         if (!item) return null;
         return { item, quantity: entry.quantity, durationDays: entry.durationDays };
       })
