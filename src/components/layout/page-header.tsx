@@ -27,7 +27,13 @@ export function PageHeader({
           sizes="100vw"
         />
       ) : null}
-      <div className="absolute inset-0 bg-gradient-to-r from-green via-green/95 to-purple" />
+      <div
+        className={
+          backgroundImage
+            ? "absolute inset-0 bg-gradient-to-r from-green/90 via-green/75 to-purple/85"
+            : "absolute inset-0 bg-gradient-to-r from-green via-green/95 to-purple"
+        }
+      />
       <div className="relative mx-auto max-w-7xl px-4 lg:px-8">
         {eyebrow && (
           <p className="text-sm font-semibold uppercase tracking-widest text-white/70">{eyebrow}</p>
