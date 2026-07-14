@@ -16,8 +16,8 @@ export interface HeroSlide {
 export const heroSlides: HeroSlide[] = [
   {
     id: "hero-1",
-    image: heroBackgrounds.corporate,
-    alt: "Corporate event venue in Accra, Ghana",
+    image: "/hero/empowering-organizations.png",
+    alt: "White event backdrop framed with greenery and red floral accents",
     title: "Empowering Organizations.",
     subtitle:
       "Strategic support that helps businesses, institutions, and families across Ghana operate with confidence and clarity.",
