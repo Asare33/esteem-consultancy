@@ -40,13 +40,6 @@ const iconMap: Record<string, LucideIcon> = {
   Heart,
 };
 
-const whyChoose = [
-  { title: "Compassion", description: "We understand grief and serve with empathy at every step." },
-  { title: "Professional Coordination", description: "Experienced coordinators manage all vendors and timelines." },
-  { title: "Customized Packages", description: "Flexible packages tailored to your family's wishes and budget." },
-  { title: "Reliable Execution", description: "Dependable delivery—from vigil to burial and reception." },
-];
-
 export default function FuneralPlanningPage() {
   return (
     <>
@@ -109,18 +102,46 @@ export default function FuneralPlanningPage() {
 
       <section className="bg-muted py-20">
         <div className="mx-auto max-w-7xl px-4 lg:px-8">
-          <h2 className="text-center font-display text-3xl font-bold text-gray">Why Families Choose Us</h2>
-          <div className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-            {whyChoose.map((item) => (
-              <div key={item.title} className="rounded-2xl bg-background p-6 text-center shadow-sm">
-                <h3 className="font-semibold text-green">{item.title}</h3>
-                <p className="mt-2 text-sm text-gray-muted">{item.description}</p>
-              </div>
-            ))}
+          <div className="mx-auto max-w-3xl text-center">
+            <h2 className="font-display text-3xl font-bold text-gray md:text-4xl">
+              Why Choose Esteem Events Management Consultancy?
+            </h2>
+            <p className="mt-4 text-gray-muted leading-relaxed">
+              Let us help you create a meaningful and respectful celebration of life.
+            </p>
           </div>
+
+          <div className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+            <div className="rounded-2xl bg-background p-6 shadow-sm">
+              <h3 className="font-semibold text-green">Compassionate Service</h3>
+              <p className="mt-2 text-sm text-gray-muted leading-relaxed">
+                We understand the emotional significance of every funeral and serve families with care and
+                empathy.
+              </p>
+            </div>
+            <div className="rounded-2xl bg-background p-6 shadow-sm">
+              <h3 className="font-semibold text-green">Professional Coordination</h3>
+              <p className="mt-2 text-sm text-gray-muted leading-relaxed">
+                Our experienced team manages every detail with precision and professionalism.
+              </p>
+            </div>
+            <div className="rounded-2xl bg-background p-6 shadow-sm">
+              <h3 className="font-semibold text-green">Customized Packages</h3>
+              <p className="mt-2 text-sm text-gray-muted leading-relaxed">
+                Every family is unique. We tailor our services to meet your needs and budget.
+              </p>
+            </div>
+            <div className="rounded-2xl bg-background p-6 shadow-sm">
+              <h3 className="font-semibold text-green">Reliable Execution</h3>
+              <p className="mt-2 text-sm text-gray-muted leading-relaxed">
+                We deliver excellence from planning to execution, ensuring a dignified farewell.
+              </p>
+            </div>
+          </div>
+
           <div className="mt-12 flex flex-wrap justify-center gap-4">
             <Button asChild size="lg">
-              <Link href="/book-consultation">Request Consultation</Link>
+              <Link href="/book-consultation">Request a Consultation</Link>
             </Button>
             <Button asChild variant="outline" size="lg">
               <Link href="/request-quote">Get a Quote</Link>
@@ -133,8 +154,10 @@ export default function FuneralPlanningPage() {
       </section>
 
       <CtaSection
-        title="We're Here When You Need Us Most"
-        description="From the Book of Condolences to final rites, our team manages every detail with dignity and care."
+        title="Request a Consultation"
+        description="Let us help you create a meaningful and respectful celebration of life."
+        primaryLabel="Request a Consultation"
+        primaryHref="/book-consultation"
       />
     </>
   );
