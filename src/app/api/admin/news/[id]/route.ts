@@ -73,7 +73,9 @@ export async function DELETE(
     | { image: string | null }
     | undefined;
 
-  if (post?.image?.startsWith("/uploads/")) deleteUpload(post.image);
+  if (post?.image?.startsWith("/uploads/") || post?.image?.startsWith("/api/uploads/")) {
+    deleteUpload(post.image);
+  }
 
   db.prepare("DELETE FROM news_posts WHERE id = ?").run(postId);
   logActivity("delete", "news", postId);

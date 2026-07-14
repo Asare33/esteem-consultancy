@@ -2,7 +2,11 @@ import path from "path";
 import fs from "fs";
 import { randomUUID } from "crypto";
 
-const UPLOAD_DIR = path.join(/* turbopackIgnore: true */ process.cwd(), "public", "uploads");
+/** Vercel project FS is read-only; persist uploads in /tmp (ephemeral per instance). */
+const UPLOAD_DIR = process.env.VERCEL
+  ? path.join("/tmp", "esteem-uploads")
+  : path.join(/* turbopackIgnore: true */ process.cwd(), "public", "uploads");
+
 const ALLOWED_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
 const MAX_SIZE = 5 * 1024 * 1024; // 5MB
 
@@ -38,14 +42,23 @@ export async function saveUpload(file: File, subfolder?: string): Promise<{ file
   const buffer = Buffer.from(await file.arrayBuffer());
   fs.writeFileSync(path.join(dir, filename), buffer);
 
-  const publicPath = subfolder ? `/uploads/${subfolder}/${filename}` : `/uploads/${filename}`;
+  // Served via /api/uploads so Vercel can read from /tmp (not from public/)
+  const publicPath = subfolder ? `/api/uploads/${subfolder}/${filename}` : `/api/uploads/${filename}`;
   return { filename, path: publicPath };
 }
 
+export function resolveUploadPath(publicPath: string): string | null {
+  const normalized = publicPath
+    .replace(/^\/api\/uploads\//, "")
+    .replace(/^\/uploads\//, "");
+  if (!normalized || normalized.includes("..")) return null;
+  return path.join(UPLOAD_DIR, normalized);
+}
+
 export function deleteUpload(publicPath: string) {
-  if (!publicPath.startsWith("/uploads/")) return;
-  const fullPath = path.join(/* turbopackIgnore: true */ process.cwd(), "public", publicPath.replace(/^\//, ""));
-  if (fs.existsSync(fullPath)) fs.unlinkSync(fullPath);
+  if (!publicPath.startsWith("/uploads/") && !publicPath.startsWith("/api/uploads/")) return;
+  const fullPath = resolveUploadPath(publicPath);
+  if (fullPath && fs.existsSync(fullPath)) fs.unlinkSync(fullPath);
 }
 
 export { UPLOAD_DIR, ALLOWED_TYPES, MAX_SIZE };

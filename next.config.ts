@@ -14,6 +14,9 @@ const nextConfig: NextConfig = {
       { source: "/rentals", destination: "/services/equipment-rentals", permanent: false },
     ];
   },
+  async rewrites() {
+    return [{ source: "/uploads/:path*", destination: "/api/uploads/:path*" }];
+  },
 };
 
 export default nextConfig;
