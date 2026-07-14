@@ -21,7 +21,7 @@ export const funeralServiceCards: FuneralServiceCard[] = [
     description:
       "Create a welcoming and respectful environment for family, friends, and well-wishers to pay their respects.",
     icon: "BookOpen",
-    image: unsplash("photo-1490730141103-6cac27aaab94"),
+    image: "/funeral/condolence-book.png",
     features: [
       "Elegant condolence table setup",
       "Floral arrangements",
