@@ -47,8 +47,8 @@ export const heroSlides: HeroSlide[] = [
   },
   {
     id: "hero-4",
-    image: heroBackgrounds.community,
-    alt: "Independence Square, Accra — a landmark for national events in Ghana",
+    image: "/hero/partner-excellence.png",
+    alt: "Elegant cocktail reception setup with black linens and floral centrepieces",
     title: "Your Partner in Excellence",
     subtitle:
       "At Esteem Management Consultancy, we provide professional Event Management, Strategic Communications, and Training services designed to help organizations, businesses, institutions, and families across Ghana achieve excellence.",
