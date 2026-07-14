@@ -14,7 +14,7 @@ const updateSchema = z.object({
   name: z.string().trim().min(2).max(160).optional(),
   category: z.string().trim().min(2).max(80).optional(),
   description: z.string().trim().max(1000).optional().nullable(),
-  image: z.string().trim().max(500).optional().nullable(),
+  image: z.string().max(7_000_000).optional().nullable(),
   totalStock: z.number().int().min(0).optional(),
   rentalPriceGhs: z.number().min(0).optional(),
   maintenanceStatus: z.enum(["ok", "maintenance", "retired"]).optional(),

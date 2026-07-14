@@ -8,7 +8,9 @@ const UPLOAD_DIR = process.env.VERCEL
   : path.join(/* turbopackIgnore: true */ process.cwd(), "public", "uploads");
 
 const ALLOWED_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
-const MAX_SIZE = 5 * 1024 * 1024; // 5MB
+const MAX_SIZE = 5 * 1024 * 1024; // 5MB (gallery/news file storage)
+/** Inventory embeds images as data URLs in JSON — keep smaller to fit request limits. */
+const MAX_INVENTORY_SIZE = 1.5 * 1024 * 1024;
 
 export function ensureUploadDir() {
   if (!fs.existsSync(UPLOAD_DIR)) {
@@ -16,12 +18,15 @@ export function ensureUploadDir() {
   }
 }
 
-export function validateImageFile(file: File): string | null {
+export function validateImageFile(file: File, options?: { inventory?: boolean }): string | null {
   if (!ALLOWED_TYPES.has(file.type)) {
     return "Only JPG, PNG, and WebP images are allowed.";
   }
-  if (file.size > MAX_SIZE) {
-    return "File size must be under 5MB.";
+  const max = options?.inventory ? MAX_INVENTORY_SIZE : MAX_SIZE;
+  if (file.size > max) {
+    return options?.inventory
+      ? "Inventory images must be under 1.5MB. Compress the photo and try again."
+      : "File size must be under 5MB.";
   }
   return null;
 }
@@ -31,7 +36,9 @@ export async function saveUpload(
   subfolder?: string,
   options?: { asDataUrl?: boolean }
 ): Promise<{ filename: string; path: string }> {
-  const error = validateImageFile(file);
+  const error = validateImageFile(file, {
+    inventory: options?.asDataUrl === true || subfolder === "inventory" || Boolean(process.env.VERCEL),
+  });
   if (error) throw new Error(error);
 
   const ext = file.name.split(".").pop()?.toLowerCase() ?? "jpg";

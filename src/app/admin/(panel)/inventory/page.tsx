@@ -126,7 +126,17 @@ export default function AdminInventoryPage() {
     setSaving(false);
 
     if (!res.ok) {
-      setError(typeof data.error === "string" ? data.error : "Unable to save inventory item");
+      const message =
+        typeof data.error === "string"
+          ? data.error
+          : data.error?.formErrors?.length
+            ? data.error.formErrors.join(", ")
+            : data.error?.fieldErrors
+              ? Object.entries(data.error.fieldErrors)
+                  .map(([field, msgs]) => `${field}: ${(msgs as string[]).join(", ")}`)
+                  .join("; ")
+              : "Unable to save inventory item";
+      setError(message);
       return;
     }
 

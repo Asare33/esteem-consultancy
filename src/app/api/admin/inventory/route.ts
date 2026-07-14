@@ -10,7 +10,8 @@ const itemSchema = z.object({
   name: z.string().trim().min(2).max(160),
   category: z.string().trim().min(2).max(80),
   description: z.string().trim().max(1000).optional().nullable(),
-  image: z.string().trim().max(500).optional().nullable(),
+  // Allow HTTPS URLs or embedded data URLs from inventory uploads (~5MB image ceiling)
+  image: z.string().max(7_000_000).optional().nullable(),
   totalStock: z.number().int().min(0),
   rentalPriceGhs: z.number().min(0),
   maintenanceStatus: z.enum(["ok", "maintenance", "retired"]).default("ok"),
