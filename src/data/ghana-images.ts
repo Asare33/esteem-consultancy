@@ -25,8 +25,8 @@ export function ghanaImage(key: GhanaImageKey, width = 1200): string {
   return `https://images.unsplash.com/${ghanaImages[key]}?w=${width}&q=80&auto=format&fit=crop`;
 }
 
-/** Default hero/header backdrop — Accra skyline */
-export const defaultPageHeaderImage = ghanaImage("accraSkyline", 1920);
+/** Default hero/header backdrop — outdoor chairs & tent event setup */
+export const defaultPageHeaderImage = "/hero/rentals-banner.png";
 
 /** Hero carousel backgrounds */
 export const heroBackgrounds = {
