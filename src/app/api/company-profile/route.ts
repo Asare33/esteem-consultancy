@@ -16,7 +16,9 @@ VISION
 ${siteInfo.vision}
 
 CONTACT
-${siteInfo.contact.address}, ${siteInfo.contact.city}, ${siteInfo.contact.region}, ${siteInfo.contact.country}
+${siteInfo.contact.contactPerson ? `${siteInfo.contact.contactPerson.name}
+${siteInfo.contact.contactPerson.title}
+` : ""}${siteInfo.contact.address}, ${siteInfo.contact.city}, ${siteInfo.contact.region}, ${siteInfo.contact.country}
 Phone: ${siteInfo.contact.phone}
 Email: ${siteInfo.contact.email}
 

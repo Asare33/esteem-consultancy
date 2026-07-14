@@ -2,7 +2,7 @@
 
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Phone, Mail, MapPin, Clock, MessageCircle } from "lucide-react";
+import { Phone, Mail, MapPin, Clock, MessageCircle, UserRound } from "lucide-react";
 import { PageHeader } from "@/components/layout/page-header";
 import { siteInfo } from "@/data/site";
 import { services } from "@/data/services";
@@ -91,6 +91,20 @@ export default function ContactPage() {
             </div>
 
             <div className="space-y-4">
+              {siteInfo.contact.contactPerson && (
+                <Card className="border-0 shadow-md">
+                  <CardContent className="flex items-start gap-4 p-5">
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-green/10 text-green">
+                      <UserRound className="h-5 w-5" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-semibold text-gray">Lead Contact</p>
+                      <p className="text-sm font-medium text-gray">{siteInfo.contact.contactPerson.name}</p>
+                      <p className="text-sm text-gray-muted">{siteInfo.contact.contactPerson.title}</p>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
               {[
                 { icon: Phone, label: "Phone", value: siteInfo.contact.phone },
                 { icon: Mail, label: "Email", value: siteInfo.contact.email },

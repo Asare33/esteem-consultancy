@@ -4,6 +4,11 @@ export interface SocialLink {
   label: string;
 }
 
+export interface ContactPerson {
+  name: string;
+  title: string;
+}
+
 export interface ContactInfo {
   address: string;
   city: string;
@@ -14,6 +19,7 @@ export interface ContactInfo {
   email: string;
   emailSecondary?: string;
   whatsapp: string;
+  contactPerson?: ContactPerson;
   mapEmbedUrl?: string;
   businessHours: {
     weekdays: string;
@@ -77,11 +83,14 @@ export const siteInfo: SiteInfo = {
     city: "Accra",
     region: "Greater Accra",
     country: "Ghana",
-    phone: "+233 30 278 9456",
-    phoneSecondary: "+233 24 812 3456",
+    phone: "+233 24 463 2389",
     email: "info@esteemconsultancygh.com",
     emailSecondary: "events@esteemconsultancygh.com",
-    whatsapp: "+233248123456",
+    whatsapp: "+233244632389",
+    contactPerson: {
+      name: "Rose Abena Peprah, APR",
+      title: "Lead Consultant & Emotional Intelligence Trainer",
+    },
     mapEmbedUrl:
       "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3970.789!2d-0.187!3d5.556!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zNcKwMzMnMjAuNCJOIDDCsDExJzEzLjIiVw!5e0!3m2!1sen!2sgh!4v1",
     businessHours: {
@@ -108,7 +117,7 @@ export const siteInfo: SiteInfo = {
     },
     {
       platform: "whatsapp",
-      url: "https://wa.me/233248123456",
+      url: "https://wa.me/233244632389",
       label: "Chat with us on WhatsApp",
     },
   ],
