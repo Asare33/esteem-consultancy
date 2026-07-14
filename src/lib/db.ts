@@ -4,7 +4,10 @@ import path from "path";
 import fs from "fs";
 import { applyEnterpriseSchema, generateRentalNumber } from "@/lib/schema-enterprise";
 
-const DATA_DIR = path.join(/* turbopackIgnore: true */ process.cwd(), "data");
+/** On Vercel the project FS is read-only; use /tmp for ephemeral SQLite. */
+const DATA_DIR = process.env.VERCEL
+  ? path.join("/tmp", "esteem-data")
+  : path.join(/* turbopackIgnore: true */ process.cwd(), "data");
 const DB_PATH = path.join(DATA_DIR, "esteem.db");
 
 let db: Database.Database | null = null;

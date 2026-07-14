@@ -21,10 +21,25 @@ export async function POST(request: NextRequest) {
 
     const token = await createToken(admin);
     await setSessionCookie(token);
-    logActivity("login", "admin", admin.id, admin.email);
 
-    return NextResponse.json({ ok: true, admin: { id: admin.id, email: admin.email, name: admin.name } });
-  } catch {
-    return NextResponse.json({ error: "Invalid request" }, { status: 400 });
+    try {
+      logActivity("login", "admin", admin.id, admin.email);
+    } catch (error) {
+      console.error("Failed to log admin login activity:", error);
+    }
+
+    return NextResponse.json({
+      ok: true,
+      admin: { id: admin.id, email: admin.email, name: admin.name },
+    });
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      return NextResponse.json({ error: "Invalid email or password format" }, { status: 400 });
+    }
+    console.error("Admin login error:", error);
+    return NextResponse.json(
+      { error: "Unable to sign in right now. Please try again." },
+      { status: 500 }
+    );
   }
 }
