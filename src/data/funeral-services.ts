@@ -47,7 +47,7 @@ export const funeralServiceCards: FuneralServiceCard[] = [
     title: "Funeral Service (Church Setup)",
     description: "Professional coordination for a seamless church service.",
     icon: "Building2",
-    image: unsplash("photo-1438232992991-995b7058bbb3"),
+    image: "/funeral/funeral-service.png",
     features: [
       "Church décor",
       "Reserved seating arrangements",
