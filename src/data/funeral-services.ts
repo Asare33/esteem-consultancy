@@ -34,7 +34,7 @@ export const funeralServiceCards: FuneralServiceCard[] = [
     title: "Night Vigil Setup",
     description: "We create serene and comforting spaces for remembrance and reflection.",
     icon: "Moon",
-    image: "/funeral/night-vigil.png",
+    image: "/funeral/night-vigil-candles.png",
     features: [
       "Canopy and seating arrangements",
       "Stage and backdrop setup",
