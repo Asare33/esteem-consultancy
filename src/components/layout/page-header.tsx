@@ -5,7 +5,8 @@ interface PageHeaderProps {
   title: string;
   description?: string;
   eyebrow?: string;
-  backgroundImage?: string;
+  /** Pass `null` for gradient-only (no photo underlay). */
+  backgroundImage?: string | null;
 }
 
 export function PageHeader({
@@ -16,15 +17,17 @@ export function PageHeader({
 }: PageHeaderProps) {
   return (
     <section className="relative overflow-hidden pt-32 pb-16 text-white">
-      <Image
-        src={backgroundImage}
-        alt=""
-        fill
-        className="object-cover"
-        priority
-        sizes="100vw"
-      />
-      <div className="absolute inset-0 bg-gradient-to-r from-green/90 via-green/75 to-purple/85" />
+      {backgroundImage ? (
+        <Image
+          src={backgroundImage}
+          alt=""
+          fill
+          className="object-cover"
+          priority
+          sizes="100vw"
+        />
+      ) : null}
+      <div className="absolute inset-0 bg-gradient-to-r from-green via-green/95 to-purple" />
       <div className="relative mx-auto max-w-7xl px-4 lg:px-8">
         {eyebrow && (
           <p className="text-sm font-semibold uppercase tracking-widest text-white/70">{eyebrow}</p>

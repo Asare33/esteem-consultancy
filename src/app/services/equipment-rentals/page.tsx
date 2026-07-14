@@ -88,6 +88,7 @@ function EquipmentCatalog() {
         eyebrow="Event Management"
         title="Premium Event Equipment Rentals"
         description="Quality Equipment. Professional Setup. Reliable Delivery."
+        backgroundImage={null}
       />
 
       <section className="py-12">
