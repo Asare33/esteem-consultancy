@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { Download, FileSpreadsheet, Printer } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { printReportDocument } from "@/lib/print-report";
+import { openPrintPlaceholder, writeReportToPrintWindow } from "@/lib/print-report";
 
 const REPORTS = [
   {
@@ -63,15 +63,29 @@ export default function AdminReportsPage() {
 
   const printReport = async (reportId: string, title: string) => {
     setLoading(`${reportId}-print`);
+
+    // Open immediately on user click so the browser does not block the popup.
+    let printWindow: Window | null = null;
+    try {
+      printWindow = openPrintPlaceholder(title);
+    } catch (err) {
+      setLoading(null);
+      alert(err instanceof Error ? err.message : "Unable to open print window");
+      return;
+    }
+
     try {
       const res = await fetch(`/api/admin/reports?report=${reportId}&format=json`);
       if (!res.ok) {
+        printWindow.close();
         alert("Unable to load report for printing");
         return;
       }
       const data = await res.json();
-      printReportDocument(title, (data.rows ?? []) as Record<string, unknown>[]);
+      const rows = (data.rows ?? []) as Record<string, unknown>[];
+      writeReportToPrintWindow(printWindow, title, rows);
     } catch (err) {
+      if (printWindow && !printWindow.closed) printWindow.close();
       alert(err instanceof Error ? err.message : "Unable to print report");
     } finally {
       setLoading(null);
@@ -82,7 +96,9 @@ export default function AdminReportsPage() {
     <div>
       <div className="mb-8">
         <h1 className="font-display text-3xl font-bold text-slate-900">Reports & Exports</h1>
-        <p className="text-slate-500">Download CSV or print operational reports for finance and operations.</p>
+        <p className="text-slate-500">
+          Download CSV files or open a print-ready report with company letterhead.
+        </p>
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
