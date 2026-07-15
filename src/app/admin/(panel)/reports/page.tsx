@@ -1,8 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { Download, FileSpreadsheet } from "lucide-react";
+import { Download, FileSpreadsheet, Printer } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { printReportDocument } from "@/lib/print-report";
 
 const REPORTS = [
   {
@@ -41,7 +42,7 @@ export default function AdminReportsPage() {
   const [loading, setLoading] = useState<string | null>(null);
 
   const downloadCsv = async (report: string) => {
-    setLoading(report);
+    setLoading(`${report}-csv`);
     try {
       const res = await fetch(`/api/admin/reports?report=${report}&format=csv`);
       if (!res.ok) {
@@ -60,11 +61,28 @@ export default function AdminReportsPage() {
     }
   };
 
+  const printReport = async (reportId: string, title: string) => {
+    setLoading(`${reportId}-print`);
+    try {
+      const res = await fetch(`/api/admin/reports?report=${reportId}&format=json`);
+      if (!res.ok) {
+        alert("Unable to load report for printing");
+        return;
+      }
+      const data = await res.json();
+      printReportDocument(title, (data.rows ?? []) as Record<string, unknown>[]);
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "Unable to print report");
+    } finally {
+      setLoading(null);
+    }
+  };
+
   return (
     <div>
       <div className="mb-8">
         <h1 className="font-display text-3xl font-bold text-slate-900">Reports & Exports</h1>
-        <p className="text-slate-500">Download operational CSV reports for finance and operations.</p>
+        <p className="text-slate-500">Download CSV or print operational reports for finance and operations.</p>
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
@@ -75,14 +93,23 @@ export default function AdminReportsPage() {
             </div>
             <h2 className="font-semibold text-slate-900">{report.title}</h2>
             <p className="mt-1 text-sm text-slate-500">{report.description}</p>
-            <div className="mt-4">
+            <div className="mt-4 flex flex-wrap gap-2">
               <Button
                 size="sm"
-                disabled={loading === report.id}
+                disabled={loading === `${report.id}-csv`}
                 onClick={() => downloadCsv(report.id)}
               >
                 <Download className="mr-1 h-4 w-4" />
-                {loading === report.id ? "Downloading..." : "Download CSV"}
+                {loading === `${report.id}-csv` ? "Downloading..." : "Download CSV"}
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                disabled={loading === `${report.id}-print`}
+                onClick={() => printReport(report.id, report.title)}
+              >
+                <Printer className="mr-1 h-4 w-4" />
+                {loading === `${report.id}-print` ? "Preparing..." : "Print"}
               </Button>
             </div>
           </div>
