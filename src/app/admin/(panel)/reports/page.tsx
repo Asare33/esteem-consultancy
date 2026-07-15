@@ -40,32 +40,21 @@ const REPORTS = [
 export default function AdminReportsPage() {
   const [loading, setLoading] = useState<string | null>(null);
 
-  const download = async (report: string, format: "csv" | "json") => {
-    setLoading(`${report}-${format}`);
+  const downloadCsv = async (report: string) => {
+    setLoading(report);
     try {
-      const res = await fetch(`/api/admin/reports?report=${report}&format=${format}`);
+      const res = await fetch(`/api/admin/reports?report=${report}&format=csv`);
       if (!res.ok) {
         alert("Unable to export report");
         return;
       }
-      if (format === "csv") {
-        const blob = await res.blob();
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = `${report}-report.csv`;
-        a.click();
-        URL.revokeObjectURL(url);
-      } else {
-        const data = await res.json();
-        const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = `${report}-report.json`;
-        a.click();
-        URL.revokeObjectURL(url);
-      }
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `${report}-report.csv`;
+      a.click();
+      URL.revokeObjectURL(url);
     } finally {
       setLoading(null);
     }
@@ -75,7 +64,7 @@ export default function AdminReportsPage() {
     <div>
       <div className="mb-8">
         <h1 className="font-display text-3xl font-bold text-slate-900">Reports & Exports</h1>
-        <p className="text-slate-500">Download operational CSV/JSON reports for finance and operations.</p>
+        <p className="text-slate-500">Download operational CSV reports for finance and operations.</p>
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
@@ -86,22 +75,14 @@ export default function AdminReportsPage() {
             </div>
             <h2 className="font-semibold text-slate-900">{report.title}</h2>
             <p className="mt-1 text-sm text-slate-500">{report.description}</p>
-            <div className="mt-4 flex flex-wrap gap-2">
+            <div className="mt-4">
               <Button
                 size="sm"
-                disabled={loading === `${report.id}-csv`}
-                onClick={() => download(report.id, "csv")}
+                disabled={loading === report.id}
+                onClick={() => downloadCsv(report.id)}
               >
                 <Download className="mr-1 h-4 w-4" />
-                CSV
-              </Button>
-              <Button
-                size="sm"
-                variant="outline"
-                disabled={loading === `${report.id}-json`}
-                onClick={() => download(report.id, "json")}
-              >
-                JSON
+                {loading === report.id ? "Downloading..." : "Download CSV"}
               </Button>
             </div>
           </div>
