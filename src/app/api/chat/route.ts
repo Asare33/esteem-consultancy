@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { generateRoseReply, type ChatMessage } from "@/lib/rose-chat";
+import { generateRoseReply, isRoseAiEnabled, type ChatMessage } from "@/lib/rose-chat";
 
 export const runtime = "nodejs";
 
@@ -25,7 +25,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       reply,
       assistant: "Rose",
-      aiEnabled: Boolean(process.env.OPENAI_API_KEY?.trim()),
+      aiEnabled: isRoseAiEnabled(),
     });
   } catch (error) {
     if (error instanceof z.ZodError) {

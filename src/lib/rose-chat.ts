@@ -6,8 +6,47 @@ export interface ChatMessage {
   content: string;
 }
 
+interface AiConfig {
+  url: string;
+  apiKey: string;
+  model: string;
+  provider: "vercel-gateway" | "openai";
+}
+
 function includesAny(text: string, words: string[]) {
   return words.some((w) => text.includes(w));
+}
+
+export function isRoseAiEnabled(): boolean {
+  return Boolean(getAiConfig());
+}
+
+function getAiConfig(): AiConfig | null {
+  const gatewayKey =
+    process.env.AI_GATEWAY_API_KEY?.trim() || process.env.VERCEL_OIDC_TOKEN?.trim();
+  if (gatewayKey) {
+    return {
+      url: "https://ai-gateway.vercel.sh/v1/chat/completions",
+      apiKey: gatewayKey,
+      model:
+        process.env.ROSE_AI_MODEL ??
+        process.env.OPENAI_MODEL ??
+        "openai/gpt-4o-mini",
+      provider: "vercel-gateway",
+    };
+  }
+
+  const openaiKey = process.env.OPENAI_API_KEY?.trim();
+  if (openaiKey) {
+    return {
+      url: "https://api.openai.com/v1/chat/completions",
+      apiKey: openaiKey,
+      model: process.env.OPENAI_MODEL ?? "gpt-4o-mini",
+      provider: "openai",
+    };
+  }
+
+  return null;
 }
 
 export function getRoseFallbackReply(message: string): string {
@@ -65,24 +104,24 @@ export function getRoseFallbackReply(message: string): string {
 }
 
 export async function generateRoseReply(messages: ChatMessage[]): Promise<string> {
-  const apiKey = process.env.OPENAI_API_KEY?.trim();
+  const config = getAiConfig();
   const lastUser = [...messages].reverse().find((m) => m.role === "user");
   if (!lastUser) return getRoseFallbackReply("hello");
 
-  if (!apiKey) {
+  if (!config) {
     return getRoseFallbackReply(lastUser.content);
   }
 
   try {
     const knowledge = buildRoseKnowledge();
-    const res = await fetch("https://api.openai.com/v1/chat/completions", {
+    const res = await fetch(config.url, {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${apiKey}`,
+        Authorization: `Bearer ${config.apiKey}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: process.env.OPENAI_MODEL ?? "gpt-4o-mini",
+        model: config.model,
         temperature: 0.4,
         max_tokens: 500,
         messages: [
@@ -102,7 +141,7 @@ ${knowledge}`,
     });
 
     if (!res.ok) {
-      console.error("Rose OpenAI error:", await res.text());
+      console.error(`Rose AI error (${config.provider}):`, await res.text());
       return getRoseFallbackReply(lastUser.content);
     }
 
